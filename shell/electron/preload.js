@@ -19,6 +19,11 @@ contextBridge.exposeInMainWorld("vibedeck", {
       return () => ipcRenderer.removeListener("workspace:state", listener);
     },
   },
+  // Vibe Code Web queries and session replies through the signed-in workspace.
+  cloud: {
+    read: (procedure, params) => ipcRenderer.invoke("cloud:read", procedure, params),
+    write: (procedure, params) => ipcRenderer.invoke("cloud:write", procedure, params),
+  },
   usage: {
     account: () => ipcRenderer.invoke("usage:account"),
     connect: () => ipcRenderer.invoke("usage:connect"),

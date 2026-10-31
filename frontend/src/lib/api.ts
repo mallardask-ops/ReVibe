@@ -3,6 +3,7 @@ import type {
   McpServerInfo, AgentInfo, ImportableSkills, SkillImportResult, JsonPatchOp, ApiKeyStatus,
   ProvidersView, ProviderInfo, ProviderKeyStatus, ProviderModelInfo,
   StudioCosts, VibeReleaseNotes, TurnQueue,
+  CloudRaw, CloudError, CloudWebProject, CloudSession, CloudSessionState, HistoryEntry,
 } from "./types";
 
 // In production the sidecar serves the SPA on the same origin (no prefix).
@@ -467,3 +468,17 @@ export const transcribe = async (audio: Blob, language = navigator.language) => 
   if (!res.ok) throw new Error(body.detail || `Dictation failed (${res.status})`);
   return body as { text: string };
 };
+
+// ---------------------------------------------------------------- Vibe Code Web (cloud) sessions
+
+type CloudResult<T> = T & { error?: CloudError };
+export const parseCloudProjects = (raw: CloudRaw) =>
+  http<CloudResult<{ projects: CloudWebProject[]; nextCursor: string | null }>>("/api/cloud/projects", { method: "POST", body: JSON.stringify(raw) });
+export const parseCloudSessions = (projectId: string, raw: CloudRaw) =>
+  http<CloudResult<{ sessions: CloudSession[]; nextCursor: string | null }>>("/api/cloud/sessions", { method: "POST", body: JSON.stringify({ ...raw, projectId }) });
+export const parseCloudSessionState = (raw: CloudRaw) =>
+  http<CloudResult<{ session: CloudSessionState }>>("/api/cloud/session", { method: "POST", body: JSON.stringify(raw) });
+export const parseCloudResult = (raw: CloudRaw) =>
+  http<CloudResult<{ ok: true }>>("/api/cloud/result", { method: "POST", body: JSON.stringify(raw) });
+export const parseCloudMessages = (sessionId: string, raw: CloudRaw) =>
+  http<CloudResult<{ entries: HistoryEntry[]; nextCursor: string | null }>>("/api/cloud/messages", { method: "POST", body: JSON.stringify({ ...raw, sessionId }) });
