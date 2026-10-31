@@ -3,14 +3,16 @@ import { ArrowUpCircle, Check, Download, Library, Trash2 } from "lucide-react";
 import { Badge, Button, Spinner } from "./ui";
 import { cn } from "@/lib/utils";
 import { getSkillRegistry, installSkill, removeSkill, setSkillEnabled, updateSkill, type SkillRegistry as Registry } from "@/lib/api";
+import type { SkillInfo } from "@/lib/types";
 
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 /**
- * Skills from the account's Vibe registry: install, update to the latest
- * version, switch off or remove. Applies to new sessions in VibeDeck and the CLI.
+ * Every skill in one list: the account's Vibe registry (install, update to
+ * the latest version, switch off or remove) and, below it, skills that only
+ * exist on this computer. Applies to new sessions in VibeDeck and the CLI.
  */
-export function SkillRegistry() {
+export function SkillRegistry({ local, query }: { local: SkillInfo[]; query: string }) {
   const [data, setData] = React.useState<Registry | null>(null);
   const [busy, setBusy] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -27,6 +29,12 @@ export function SkillRegistry() {
 
   const installed = new Map((data?.installed || []).map(s => [s.name, s]));
   const updates = Object.keys(data?.updates || {}).length;
+  const q = query.trim().toLowerCase();
+  const match = (name: string, description = "") => !q || name.toLowerCase().includes(q) || description.toLowerCase().includes(q);
+  const catalog = (data?.catalog || []).filter(s => match(s.name, s.description));
+  // skills on disk that the registry does not list
+  const listed = new Set((data?.catalog || []).map(s => s.name));
+  const localOnly = local.filter(s => !listed.has(s.name) && match(s.name));
 
   return (
     <section aria-label="Skill registry" className="mb-6">
@@ -39,9 +47,10 @@ export function SkillRegistry() {
       {!data ? <p className="flex items-center gap-2 text-xs text-text-muted"><Spinner /> Loading the registry…</p>
         : !data.authenticated ? <p className="text-xs text-text-muted">Sign in to Mistral (Settings → Providers) to browse your workspace’s skills.</p>
         : !data.catalog.length ? <p className="text-xs text-text-muted">Your registry has no skills yet.</p>
+        : !catalog.length ? <p className="text-xs text-text-muted">No registry skill matches.</p>
         : (
           <ul className="divide-y divide-border rounded-lg border border-border">
-            {data.catalog.map(skill => {
+            {catalog.map(skill => {
               const local = installed.get(skill.name);
               const update = data.updates[skill.name];
               const rowBusy = busy?.endsWith(`:${skill.name}`) || busy === `install:${skill.skillId}`;
@@ -84,6 +93,23 @@ export function SkillRegistry() {
             })}
           </ul>
         )}
+      <div className="mt-6 mb-2 flex items-center gap-2">
+        <h2 className="text-sm font-semibold">On this computer</h2>
+        <span className="text-xs text-text-faint">{localOnly.length || ""}</span>
+      </div>
+      {!localOnly.length ? <p className="text-xs text-text-muted">{q ? "No local skill matches." : "Every installed skill comes from your registry."}</p> : (
+        <ul className="divide-y divide-border rounded-lg border border-border">
+          {localOnly.map(s => (
+            <li key={s.name} className="flex items-center gap-3 px-3 py-2">
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm text-text">{s.name}</div>
+                <p className="truncate font-mono text-[11px] text-text-faint" title={s.path}>{s.path}</p>
+              </div>
+              <span className="shrink-0 text-[11px] text-text-faint">local</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

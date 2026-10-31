@@ -6,6 +6,7 @@ import { Sidebar } from "./Sidebar";
 import { TitleBar } from "./TitleBar";
 import { CommandPalette } from "./CommandPalette";
 import { Backdrop } from "./Backdrop";
+import { Shortcuts } from "./Shortcuts";
 import { alert } from "@/lib/alerts";
 import { Button, Spinner } from "./ui";
 import { useSessions, useHealth, useAppConfig, normalizeLane } from "@/hooks/useSessions";
@@ -110,6 +111,10 @@ export function AppShell() {
     "h-8 w-8 grid place-items-center rounded-md text-text-muted hover:text-text hover:bg-surface-muted transition-colors duration-150";
 
   const switchLane = (l: Lane) => { setLane(l); navigate("/"); };
+  const goHome = React.useCallback(() => navigate("/"), [navigate]);
+  const toggleSidebar = React.useCallback(() => setCollapsed(c => !c), []);
+  const swapLane = React.useCallback(() => { setLane(l => (l === "code" ? "work" : "code")); navigate("/"); }, [navigate]);
+  const openSettings = React.useCallback(() => navigate("/settings"), [navigate]);
 
   return (
     <div className="h-full flex flex-col">
@@ -154,6 +159,7 @@ export function AppShell() {
           </div>
         </main>
       </div>
+      <Shortcuts onNewSession={goHome} onToggleSidebar={toggleSidebar} onSwitchLane={swapLane} onSettings={openSettings} />
       {!inWorkspace && <CommandPalette
         lane={lane}
         setLane={switchLane}

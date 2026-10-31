@@ -36,6 +36,7 @@ import cloud_teleport
 import extensions
 import git_projects
 import httpx
+import organize
 import processes
 import providers as provider_config
 import review
@@ -332,6 +333,7 @@ session_rpc.configure(lambda sid: _ensure_bridge(sid))
 vsync.config_signature = lambda: _registry_signature()
 extensions.configure(lambda cwd: VibeAppServer(cwd=cwd, stderr_log=LOG_DIR / "appserver-catalog.log"))
 worktrees.configure(lambda: vsync.host(), lambda: [r["cwd"] for r in store.list_sessions() if r.get("cwd")])
+organize.configure(store, lambda sid, state: _persist_session_state(sid, state), lambda row: _public_session(row))
 
 
 async def _open_session(sid: str) -> tuple[Any, str]:
@@ -584,6 +586,7 @@ app.include_router(processes.router)
 app.include_router(extensions.router)
 app.include_router(voice.router)
 app.include_router(sounds.router)
+app.include_router(organize.router)
 
 
 @app.middleware("http")

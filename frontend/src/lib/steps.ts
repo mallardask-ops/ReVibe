@@ -93,3 +93,35 @@ export function durationSeconds(e: HistoryEntry): number | null {
   const scale = createdAt > 1e12 ? 1000 : 1;
   return Math.round((updatedAt - createdAt) / scale);
 }
+
+export interface EditHunk { removed: string[]; added: string[]; context: number }
+
+/**
+ * What a file edit or write changed, line by line: each replacement trimmed
+ * to the lines that differ. Null for other tools.
+ */
+export function editChanges(e: HistoryEntry): { added: number; removed: number; hunks: EditHunk[] } | null {
+  const kind = e.detail?.kind;
+  const input = e.detail?.input || {};
+  let pairs: [string, string][] = [];
+  if (kind === "file_edit") {
+    const changes = Array.isArray(input.changes) ? input.changes : [input];
+    pairs = changes.map((c: any) => [String(c.oldString ?? ""), String(c.newString ?? "")]);
+  } else if (kind === "file_write") {
+    const out = e.state?.output || {};
+    pairs = [[String(out.previousContent ?? ""), String(input.content ?? out.content ?? "")]];
+  } else return null;
+  const hunks = pairs.map(([before, after]) => {
+    const a = before ? before.split("\n") : [], b = after ? after.split("\n") : [];
+    let start = 0;
+    while (start < a.length && start < b.length && a[start] === b[start]) start++;
+    let end = 0;
+    while (end < a.length - start && end < b.length - start && a[a.length - 1 - end] === b[b.length - 1 - end]) end++;
+    return { removed: a.slice(start, a.length - end), added: b.slice(start, b.length - end), context: start };
+  });
+  return {
+    added: hunks.reduce((n, h) => n + h.added.length, 0),
+    removed: hunks.reduce((n, h) => n + h.removed.length, 0),
+    hunks,
+  };
+}

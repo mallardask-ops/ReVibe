@@ -455,3 +455,8 @@ export const transcribe = async (audio: Blob, language = navigator.language) => 
   if (!res.ok) throw new Error(body.detail || `Dictation failed (${res.status})`);
   return body as { text: string };
 };
+
+// ---------------------------------------------------------------- organising sessions
+
+export const pinSession = (sid: string, pinned: boolean) => post<Session>(`/api/sessions/${encodeURIComponent(sid)}/pin`, { pinned });
+export const moveSession = (sid: string, cwd: string) => post<Session>(`/api/sessions/${encodeURIComponent(sid)}/move`, { cwd });

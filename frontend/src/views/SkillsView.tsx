@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 import { getSkills, setSharedSkills } from "@/lib/api";
-import { Button, Card, CardBody, Badge, Spinner, Input } from "@/components/ui";
+import { Button, Spinner, Input } from "@/components/ui";
 import { Puzzle, RefreshCw } from "lucide-react";
 import type { SkillInfo } from "@/lib/types";
 import { SkillRegistry } from "@/components/SkillRegistry";
@@ -27,7 +27,6 @@ export function SkillsView() {
     }).finally(() => { if (!closed) setLoading(false); });
     return () => { closed = true; };
   }, [revision]);
-  const filtered = skills.filter((s) => s.name.toLowerCase().includes(q.toLowerCase()));
   return (
     <div className="h-full overflow-y-auto px-6 py-6">
       <div className="flex items-center gap-2 mb-1">
@@ -50,23 +49,9 @@ export function SkillsView() {
         <Link to="/workspace/skills" className="inline-block text-sm text-primary hover:underline">Manage web workspace skills</Link>
       </div>
       {error && <p role="alert" className="mb-3 text-sm text-danger">{error}</p>}
-      <SkillRegistry />
-      <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter skills…" className="max-w-sm mb-4" />
-      {loading && <div className="text-text-muted text-sm flex items-center gap-2"><Spinner /> Loading…</div>}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {filtered.map((s) => (
-          <Card key={s.name}>
-            <CardBody>
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-medium">{s.name}</span>
-                <Badge>skill</Badge>
-              </div>
-              <div className="text-xs text-text-faint font-mono truncate">{s.path}</div>
-            </CardBody>
-          </Card>
-        ))}
-        {!loading && !error && filtered.length === 0 && <div className="text-text-faint text-sm">{q ? "No matching skills." : "No skills found."}</div>}
-      </div>
+      <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter skills…" className="max-w-sm mb-4" aria-label="Filter skills" />
+      {loading && <div className="mb-3 text-text-muted text-sm flex items-center gap-2"><Spinner /> Loading…</div>}
+      <SkillRegistry local={skills} query={q} />
     </div>
   );
 }

@@ -18,6 +18,8 @@ export interface Session {
   warnings?: string[];
   /** how the last turn ended: completed | failed | interrupted */
   last_turn?: string | null;
+  /** set while pinned to the top of the sidebar */
+  pinned_at?: number | null;
   costs?: SessionCosts;
   live?: boolean;
 }
@@ -146,6 +148,8 @@ export interface SessionStats {
   inputPricePerMillion: number;
   outputPricePerMillion: number;
   lastTurnDuration?: number;
+  lastTurnPromptTokens?: number;
+  lastTurnCompletionTokens?: number;
   tokensPerSecond?: number;
 }
 

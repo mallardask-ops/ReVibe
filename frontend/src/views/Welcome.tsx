@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { Composer, type ImageAttachment } from "@/components/Composer";
 import { MistralLogo } from "@/components/Logo";
+import { WelcomeTour } from "@/components/WelcomeTour";
 import { ProjectPicker, rememberCwd } from "@/components/ProjectPicker";
 import { BranchPicker } from "@/components/BranchPicker";
 import { CheckoutPicker } from "@/components/CheckoutPicker";
@@ -162,6 +163,7 @@ export function Welcome() {
               ) : undefined}
             />
           </div>
+          <WelcomeTour />
 
           {/* work lane: suggestion chips stacked under the composer, left-aligned
               with it — exactly like the webapp */}
