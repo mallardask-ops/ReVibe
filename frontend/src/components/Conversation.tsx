@@ -21,6 +21,22 @@ import type { ChildSession, Session } from "@/lib/types";
 
 const PAGE = 60;
 
+const FOLLOW_UPS = [
+  (p: string) => `What's next for ${p}?`,
+  () => "Reply, or type / for commands",
+  () => "Ask a follow-up, or start with ! to run a command",
+  (p: string) => `Anything else in ${p}?`,
+];
+
+/** The composer's hint: the project by name (the path is in the strip below), one phrasing per session. */
+function composerHint(session: Session, running: boolean, started: boolean): string {
+  const project = session.cwd.split(/[\\/]/).filter(Boolean).pop() || "this folder";
+  if (running) return "Vibe is working. Anything you send goes next in the queue";
+  if (!started) return `What should we build in ${project}?`;
+  const pick = [...session.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % FOLLOW_UPS.length;
+  return FOLLOW_UPS[pick](project);
+}
+
 export function Conversation({ session }: { session: Session }) {
   const [released, setReleased] = React.useState(false);
   const conv = useConversation(session.id, released);
@@ -122,6 +138,12 @@ export function Conversation({ session }: { session: Session }) {
     prevTurn.current = conv.turnStatus;
     if (prev === "running" && conv.turnStatus === "completed" && !document.hasFocus()) {
       notify("Vibe finished", session.title);
+    }
+    // the sidebar shows the run state and orders by activity; the sidecar
+    // writes the status as it sees the same event, so ask a moment later
+    if ((prev === "running") !== (conv.turnStatus === "running")) {
+      const t = window.setTimeout(() => window.dispatchEvent(new Event("vibedeck:sessions")), 400);
+      return () => window.clearTimeout(t);
     }
   }, [conv.turnStatus, session.title]);
 
@@ -459,7 +481,7 @@ export function Conversation({ session }: { session: Session }) {
             onCompact={running || released ? undefined : compact}
             // while the agent works, keep typing the next queued message
             disabled={(sending && !running) || released}
-            placeholder={`Message Vibe in ${session.cwd}…`}
+            placeholder={composerHint(session, running, conv.entries.length > 0)}
             model={model}
             onModelChange={changeModel}
             reasoning={reasoning}

@@ -451,7 +451,8 @@ def _start_tap(sid: str, bridge) -> None:
                     store.upsert_costs(sid, p.get("stats", {}),
                                        str(p.get("eventId", bridge.last_event_id)), row.get("model"))
                 elif msg.get("method") == "turn/completed":
-                    store.set_session_status(sid, "idle")
+                    outcome = (p.get("turn") or {}).get("status")
+                    store.set_session_status(sid, "idle", outcome if isinstance(outcome, str) else None)
                 elif msg.get("method") == "turn/started":
                     store.set_session_status(sid, "running")
         except (asyncio.CancelledError, BridgeError):

@@ -16,6 +16,8 @@ export interface Session {
   origin?: "vibedeck" | "vibe";
   /** non-fatal setup issues from creation (e.g. model/agent not applied) */
   warnings?: string[];
+  /** how the last turn ended: completed | failed | interrupted */
+  last_turn?: string | null;
   costs?: SessionCosts;
   live?: boolean;
 }
