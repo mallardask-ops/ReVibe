@@ -305,11 +305,7 @@ export function Conversation({ session }: { session: Session }) {
       {/* header */}
       <div className="flex h-12 items-center gap-1 pl-5 pr-3 shrink-0">
         <div className="min-w-0 flex-1 flex items-center gap-2 text-sm">
-          <span className="hidden min-w-0 shrink items-center gap-1.5 text-text-muted sm:flex" title={session.cwd}>
-            <Folder size={16} className="shrink-0" />
-            <span className="truncate">{session.cwd.split("/").filter(Boolean).pop() || session.cwd}</span>
-          </span>
-          <span className="hidden shrink-0 text-text-faint sm:inline">/</span>
+          {/* the session's name; its folder and branch are in the strip under the composer */}
           <div className="flex min-w-0 flex-1 items-center gap-0.5">
             <div className="min-w-0"><SessionTitle session={session} renameRequest={renameRequest} /></div>
             <SessionMenu

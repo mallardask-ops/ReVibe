@@ -380,7 +380,7 @@ export function Sidebar({
 
         {/* user profile + status — pinned footer, never cut off */}
         <div className="px-3.5 pt-1 pb-2.5 shrink-0">
-          <AccountMenu user={user} />
+          <AccountMenu user={user} vibeReady={!!health?.api_key} />
           <div className="mt-1 px-3 flex items-center gap-2 text-[11px] text-text-faint">
             <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", health?.ok ? "bg-success" : "bg-danger")} />
             <span className="truncate">{health?.ok ? "Sidecar connected" : "Sidecar offline"}</span>

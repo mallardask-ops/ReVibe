@@ -46,7 +46,7 @@ export function ExtensionsView() {
             <p>Finish or stop the current turn before choosing Continue in the Vibe CLI. Close the terminal session before resuming in desktop.</p>
             <p>For a cloud handoff, continue in the CLI and use <code>/teleport</code>. This is a one-way move to Vibe Code Web, requires an eligible Mistral account and a GitHub-connected repository, and does not support third-party models. Local Work chats stay local.</p>
             <a href="https://docs.mistral.ai/vibe/code/cli/teleport-cli-web" target="_blank" rel="noreferrer" className="inline-flex text-primary hover:underline">Read the cloud handoff requirements</a>
-            <div className="flex flex-wrap gap-4"><Link to="/settings?section=config" className="text-primary hover:underline">CLI configuration</Link><Link to="/mcp" className="text-primary hover:underline">MCP servers</Link><Link to="/skills" className="text-primary hover:underline">Skills</Link></div>
+            <div className="flex flex-wrap gap-4"><Link to="/settings?section=agents" className="text-primary hover:underline">Agent settings</Link><Link to="/mcp" className="text-primary hover:underline">MCP servers</Link><Link to="/skills" className="text-primary hover:underline">Skills</Link></div>
           </div>
         </details>
       </section>
