@@ -36,3 +36,20 @@ export function MistralLogo({
     </svg>
   );
 }
+
+/** The ReVibe R, from packaging/brand/make_logo.py: rows top to bottom. */
+const REVIBE_BITMAP = ["XXXXXXX.", "XXXXXXXX", "XX....XX", "XX....XX", "XXXXXXXX", "XXXXXXX.", "XX..XX..", "XX...XX.", "XX....XX", "XX....XX"];
+const REVIBE_RAMP = ["#FFD800", "#FFC800", "#FFB600", "#FFA301", "#FF8F04", "#FF7A06", "#FA640A", "#F44B0C", "#EC2E09", "#E10500"];
+
+/** ReVibe's mark: a pixel R in the yellow-to-red ramp, optionally on its dark tile. */
+export function ReVibeLogo({ size = 24, tile = false, className }: { size?: number; tile?: boolean; className?: string }) {
+  const cells = REVIBE_BITMAP.flatMap((line, r) => [...line].map((ch, c) => ch === "X"
+    ? <rect key={`${r}-${c}`} x={c + 0.05} y={r + 0.05} width={0.9} height={0.9} rx={0.14} fill={REVIBE_RAMP[r]} /> : null));
+  return (
+    <svg width={size} height={size} viewBox={tile ? "-4.6 -3.6 17.2 17.2" : "-1.1 -0.1 10.2 10.2"} xmlns="http://www.w3.org/2000/svg"
+      role="img" aria-label="ReVibe" className={className}>
+      {tile && <rect x={-4.6} y={-3.6} width={17.2} height={17.2} rx={3.8} fill="#18181b" />}
+      {cells}
+    </svg>
+  );
+}

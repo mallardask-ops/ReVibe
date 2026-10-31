@@ -32,7 +32,7 @@ class CodexClient(VibeAppServer):
             cwd=self.cwd, limit=64 * 1024 * 1024)
         self._reader_task = asyncio.create_task(self._read_loop())
         try:
-            await self.call("initialize", {"clientInfo": {"name": "vibedeck", "version": "1.1.0"},
+            await self.call("initialize", {"clientInfo": {"name": "revibe", "version": "1.0.0"},
                                            "capabilities": {"experimentalApi": True}})
             self._send_raw({"method": "initialized", "params": {}})
         except BaseException:
@@ -46,7 +46,7 @@ class CodexClient(VibeAppServer):
         else:
             # This is a model adapter. Vibe, not Codex, executes approved tools.
             self._send_raw({"id": message["id"], "error": {"code": -32601,
-                            "message": "Execute tools through VibeDeck's supplied dynamic tools."}})
+                            "message": "Execute tools through ReVibe's supplied dynamic tools."}})
 
 
 class CodexProvider:
@@ -175,7 +175,7 @@ class CodexProvider:
             # shortcut: Codex app-server has no hard output-token cap; upgrade when its protocol exposes one.
             if body.get("max_tokens"):
                 instructions += f"\nKeep your answer under {body['max_tokens']} output tokens."
-            instructions += "\nYou are the model for VibeDeck. Use only the supplied vibedeck_tool_* dynamic tools for all actions. VibeDeck runs them and obtains approvals. Never use built-in tools. Answer the user's request directly."
+            instructions += "\nYou are the model for ReVibe. Use only the supplied vibedeck_tool_* dynamic tools for all actions. ReVibe runs them and obtains approvals. Never use built-in tools. Answer the user's request directly."
             thread = await client.call("thread/start", {"model": body["model"], "modelProvider": "openai",
                 "cwd": home.name, "sandbox": "read-only", "approvalPolicy": "never", "ephemeral": True,
                 "baseInstructions": instructions, "config": overrides, "dynamicTools": tools})

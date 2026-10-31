@@ -41,7 +41,7 @@ class MoveReq(BaseModel):
 @router.post("/api/sessions/{sid}/pin")
 async def pin(sid: str, r: PinReq) -> dict:
     row = _row(sid)
-    # pinning is VibeDeck's own shelf; it does not change the activity order
+    # pinning is ReVibe's own shelf; it does not change the activity order
     _store.upsert_session(sid, pinned_at=time.time() if r.pinned else None, updated_at=row.get("updated_at"))
     return _public(_store.get_session(sid))
 

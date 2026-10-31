@@ -579,7 +579,7 @@ export const EntryBlock = React.memo(function EntryBlock({
       return isManualShell(e) ? <ShellBlock e={e} /> : <ToolCallBlock e={e} />;
     case "callback":
       return e.detail?.kind === "user_input" ? <QuestionCard e={e} onResolve={onResolve} /> : e.detail?.kind === "approval" || !e.detail?.kind
-        ? <ApprovalCard e={e} onResolve={onResolve} /> : <div role="alert" className="px-6 py-2 text-sm text-danger">This prompt requires a newer VibeDeck client. Stop the turn and resume in the CLI.</div>;
+        ? <ApprovalCard e={e} onResolve={onResolve} /> : <div role="alert" className="px-6 py-2 text-sm text-danger">This prompt requires a newer ReVibe client. Stop the turn and resume in the CLI.</div>;
     case "notice":
       return <NoticeBlock e={e} />;
     case "checkpoint":

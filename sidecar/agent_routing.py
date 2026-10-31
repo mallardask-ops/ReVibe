@@ -68,7 +68,7 @@ def delegation_instructions(settings: AgentSettings | None = None) -> str:
         'requested': 'Delegate when the user asks for agents, including casual requests to send off subagents.',
         'auto': 'Proactively delegate substantial independent work when it improves quality. Keep trivial or tightly coupled work local.',
     }[settings.policy]
-    return (f'VibeDeck subagents: {rule} Default quality: {settings.quality}; batch limit: {settings.max_workers}. '
+    return (f'ReVibe subagents: {rule} Default quality: {settings.quality}; batch limit: {settings.max_workers}. '
             'Use the bundled mcp_vibedeck_providers delegate tool for Mistral or other provider models. '
             'Use automatic=true only for jobs not requested by the user. Discover configured aliases with list_models. '
             'Honor named providers, model aliases and thinking levels without substitution. Select task kind and quality for the work. '

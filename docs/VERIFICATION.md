@@ -14,7 +14,7 @@ Version 1.1.0, checked October 21, 2026. Automated tests use temporary profiles,
 
 ## Installation and sign-in
 
-Clean containers started with no VibeDeck installation, database, or browser profile. Both installed the shared source installer and passed the installed-launcher check. First launch displayed Mistral sign-in, kept Mistral as the default, installed the bundled worker tools, and offered Ask, Plan, Accept edits, and Full auto. UI tests used the distribution's Chromium package and Xvfb.
+Clean containers started with no ReVibe installation, database, or browser profile. Both installed the shared source installer and passed the installed-launcher check. First launch displayed Mistral sign-in, kept Mistral as the default, installed the bundled worker tools, and offered Ask, Plan, Accept edits, and Full auto. UI tests used the distribution's Chromium package and Xvfb.
 
 Fresh browser sign-in was completed live on Fedora. Skills, Knowledge, Connectors, Libraries, Instructions, Scheduled, Docs, and Admin opened without another login. Subscription usage returned `ready`. The account stayed saved after an app restart, and Skills and Admin reopened authenticated. Sign-out cleared the disposable browser connection and restored the Sign in control. Existing desktop data stayed separate.
 
@@ -47,8 +47,8 @@ With Vibe CLI 3.0.1, an isolated loopback model completed 100 turns in one nativ
 
 A separate 150-turn local run measured app-server resident memory at 141,072; 179,988; 169,556; and 174,760 KiB at turns 0, 50, 100, and 150 on this machine. It completed without a failure or sustained upward trend; the sample does not establish a general memory limit.
 
-The run exposed two Vibe 3 compatibility issues: repository workers used the removed `plan` agent, and the desktop's Plan mode was rejected. Workers now use `ask` with only read/grep enabled. VibeDeck creates a read-only `plan` profile if the user has not supplied one; the native handoff check verifies that the app-server accepts it.
+The run exposed two Vibe 3 compatibility issues: repository workers used the removed `plan` agent, and the desktop's Plan mode was rejected. Workers now use `ask` with only read/grep enabled. ReVibe creates a read-only `plan` profile if the user has not supplied one; the native handoff check verifies that the app-server accepts it.
 
 Live Mistral generation stopped before a model request because the current CLI profile has no `MISTRAL_API_KEY`. MiniMax's external worker route rejected its selected model, and no MiniMax provider key was detected. Their live generation remains unverified; the Mistral and MiniMax loopback protocol paths passed. Electron's live window check could not launch in this headless session because neither an X display nor Xvfb was available; its JavaScript tests and browser UI checks passed.
 
-[Back to VibeDeck](../README.md)
+[Back to ReVibe](../README.md)

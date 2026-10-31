@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-# Point VibeDeck's data dir at a temp location BEFORE the server module is imported,
+# Point ReVibe's data dir at a temp location BEFORE the server module is imported,
 # so the module-level Store/Manager use an isolated DB.
 _TMP = tempfile.mkdtemp(prefix="vibedeck-test-")
 os.environ["VIBEDECK_DATA"] = _TMP

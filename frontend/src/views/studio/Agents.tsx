@@ -19,7 +19,7 @@ export function AgentsView() {
         Agent profiles known to the vibe CLI. <span className="text-text">Modes</span> set the
         session's approval posture; native <span className="text-primary">subagents</span>
         inherit the parent model. To delegate to another provider, ask the main model
-        to use VibeDeck’s built-in delegate tool. Configure automatic delegation and quality in Settings → Config → Subagents. Profiles live in{" "}
+        to use ReVibe’s built-in delegate tool. Configure automatic delegation and quality in Settings → Config → Subagents. Profiles live in{" "}
         <code className="font-mono">~/.vibe/agents/*.toml</code>.
       </p>
       {error && <p role="alert" className="mb-4 text-sm text-danger">{error}</p>}

@@ -12,7 +12,7 @@ const KEPT: Record<string, string> = {
 };
 
 /**
- * The worktrees Vibe created for sessions, in every repository VibeDeck
+ * The worktrees Vibe created for sessions, in every repository ReVibe
  * sessions have used: their branch and how far it moved, with removal and a
  * prune of the ones no session holds any more.
  */

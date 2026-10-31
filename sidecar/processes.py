@@ -36,7 +36,7 @@ class ShellReq(BaseModel):
 
 
 class InterruptReq(BaseModel):
-    reason: str = Field("Stopped from VibeDeck", min_length=1, max_length=500)
+    reason: str = Field("Stopped from ReVibe", min_length=1, max_length=500)
 
 
 @router.get("/api/sessions/{sid}/subagents")

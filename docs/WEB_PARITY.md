@@ -1,6 +1,6 @@
 # Mistral web workspace
 
-VibeDeck runs Mistral's hosted workspace inside a sandboxed Electron view. Context pages save to the signed-in web account. Native coding sessions share history and configuration with the Vibe CLI. Embedding the web app does not upload local chats, skills, or MCP servers.
+ReVibe runs Mistral's hosted workspace inside a sandboxed Electron view. Context pages save to the signed-in web account. Native coding sessions share history and configuration with the Vibe CLI. Embedding the web app does not upload local chats, skills, or MCP servers.
 
 ## Pages
 
@@ -20,9 +20,9 @@ Instructions uses Work's visible navigation because no panel deep link is docume
 
 ## Sign-in
 
-Google and email authentication take place in regular Chrome or Chromium. Only secure Mistral cookies from VibeDeck's own sign-in profile enter Electron. Google cookies are excluded. Admin imports its own scoped Mistral cookies, while Docs stays anonymous. Hosted pages have no local preload, Node access, or desktop IPC bridge.
+Google and email authentication take place in regular Chrome or Chromium. Only secure Mistral cookies from ReVibe's own sign-in profile enter Electron. Google cookies are excluded. Admin imports its own scoped Mistral cookies, while Docs stays anonymous. Hosted pages have no local preload, Node access, or desktop IPC bridge.
 
-After browser sign-in, choose **I've signed in** in VibeDeck. The connection is saved across app launches until it expires, is revoked, or the user signs out. Cancellation preserves the existing workspace. Account status checks do not wait for billing requests.
+After browser sign-in, choose **I've signed in** in ReVibe. The connection is saved across app launches until it expires, is revoked, or the user signs out. Cancellation preserves the existing workspace. Account status checks do not wait for billing requests.
 
 Admin authentication callbacks keep their original session. Refresh restarts expired authentication flows from the service page. Sign-out clears the saved browser connection and all hosted workspace partitions, while preserving CLI credentials, API keys, and local conversations.
 
@@ -38,4 +38,4 @@ Native Skills exposes Vibe's experimental shared registry setting. It requires s
 
 Fedora and Debian passed isolated browser and Electron checks for navigation, uploads/downloads, cookie scope, session persistence, cancellation, sign-out, and CLI handoff. Fresh browser sign-in and hosted pages were also checked live on Fedora. Fixtures verify integration behavior; they do not establish successful cloud edits or task execution.
 
-[Verification and limits](VERIFICATION.md) · [Back to VibeDeck](../README.md)
+[Verification and limits](VERIFICATION.md) · [Back to ReVibe](../README.md)

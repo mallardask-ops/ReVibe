@@ -1,5 +1,5 @@
 """What a user message becomes on the wire: content blocks for ``turn/start``
-and turn-queue entries, with the inline images VibeDeck accepts."""
+and turn-queue entries, with the inline images ReVibe accepts."""
 from __future__ import annotations
 
 import base64

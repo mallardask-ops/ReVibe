@@ -66,7 +66,7 @@ export function WorkspaceView() {
     {signingIn && <div className="shrink-0 border-b border-border bg-sidebar p-4"><SignInConfirmation connectors={connectingServices} /></div>}
     {!signingIn && state.detail && <div role={state.status === "error" ? "alert" : "status"} className="shrink-0 flex items-center gap-3 border-b border-border bg-sidebar px-4 py-2 text-sm text-text-muted"><span className="flex-1">{state.detail}</span><Button variant="ghost" size="icon" aria-label="Dismiss workspace notice" onClick={() => setState(value => ({...value,detail:""}))}><X size={14} /></Button></div>}
     <div ref={area} className="flex-1 min-h-0 flex items-center justify-center bg-bg">
-      {showLocal ? <McpView onManageWeb={() => setLocalConnectors(false)} /> : !desktop ? <p className="max-w-md p-6 text-sm text-text-muted">The integrated Mistral workspace requires the Electron desktop app. Launch VibeDeck from your applications menu.</p>
+      {showLocal ? <McpView onManageWeb={() => setLocalConnectors(false)} /> : !desktop ? <p className="max-w-md p-6 text-sm text-text-muted">The integrated Mistral workspace requires the Electron desktop app. Launch ReVibe from your applications menu.</p>
         : state.status === "loading" && <p className="flex items-center gap-2 text-sm text-text-muted"><Spinner />Opening your workspace...</p>}
     </div>
   </div>;

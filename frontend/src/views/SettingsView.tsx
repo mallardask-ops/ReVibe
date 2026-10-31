@@ -139,7 +139,7 @@ export function SettingsView() {
     <div className="h-full flex flex-col settings-page">
       <header className="shrink-0 border-b border-border px-6 py-5">
         <h2 className="text-lg font-semibold">Settings</h2>
-        <p className="text-sm text-text-muted mt-1">Make VibeDeck work the way you do.</p>
+        <p className="text-sm text-text-muted mt-1">Make ReVibe work the way you do.</p>
       </header>
       <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto">
         <div className="mx-auto max-w-5xl px-5 py-6 lg:px-8 lg:py-8 grid grid-cols-1 lg:grid-cols-[184px_minmax(0,1fr)] gap-6 lg:gap-10">
@@ -200,7 +200,7 @@ function GeneralSection({ config }: { config: any }) {
   return (
     <>
       <Group title="New conversations" description="Any of these can be changed inside a conversation.">
-        <Field label="Start in" hint="The lane VibeDeck opens with.">
+        <Field label="Start in" hint="The lane ReVibe opens with.">
           <DefaultLaneSelect />
         </Field>
         <Field label="Model" hint={note("model") || "Any registered model can be picked per session."}>
@@ -349,13 +349,13 @@ function NotificationsSection() {
             onPointerUp={() => void playSound("done")} onKeyUp={() => void playSound("done")}
             className="w-full accent-primary disabled:opacity-40" />
         </Field>
-        <Field label="Also while VibeDeck is focused" hint="Off: sounds only when you are in another window.">
-          <Switch on={prefs.soundWhenFocused} disabled={!soundsOn} label="Play sounds while VibeDeck is focused"
+        <Field label="Also while ReVibe is focused" hint="Off: sounds only when you are in another window.">
+          <Switch on={prefs.soundWhenFocused} disabled={!soundsOn} label="Play sounds while ReVibe is focused"
             onChange={on => set({ soundWhenFocused: on })} />
         </Field>
       </Group>
 
-      <Group title="Desktop notifications" description="Shown while VibeDeck is in the background. Clicking one opens its session.">
+      <Group title="Desktop notifications" description="Shown while ReVibe is in the background. Clicking one opens its session.">
         <Field label="Show notifications" hint={supported ? undefined : "This window cannot show notifications."}>
           <Switch on={desktopOn} disabled={!supported} label="Desktop notifications"
             onChange={on => { setNotificationsEnabled(on); setDesktopOn(on); }} />
@@ -572,8 +572,8 @@ function TrayControl() {
   const available = !!settings?.tray;
   const hint = error ? <span role="alert" className="text-danger">{error}</span>
     : !desktop ? "Available in the desktop app."
-    : settings && !available ? "Your desktop has no system tray, so closing the window quits VibeDeck."
-    : "Closing the window hides VibeDeck to the tray icon. Quit from the tray menu.";
+    : settings && !available ? "Your desktop has no system tray, so closing the window quits ReVibe."
+    : "Closing the window hides ReVibe to the tray icon. Quit from the tray menu.";
   return (
     <Field label="Keep running in the tray" hint={hint}>
       <Switch on={!!settings?.closeToTray} disabled={busy || !available} label="Keep running in the tray" onChange={on => void toggle(on)} />
@@ -590,7 +590,7 @@ function AboutSection({ health }: { health: any }) {
   return (
     <>
       <Group title="Versions">
-        <Field label="VibeDeck"><span className="font-mono text-xs text-text-muted">{health?.version || "—"}</span></Field>
+        <Field label="ReVibe"><span className="font-mono text-xs text-text-muted">{health?.version || "—"}</span></Field>
         <Field label="Vibe" hint={health?.vibe?.outdated
           ? <>Update with <code className="font-mono">{health.vibe.upgradeCommand}</code>.</> : undefined}>
           <span className="flex items-center gap-2">

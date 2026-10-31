@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* VibeDeck design tokens — matches the Vibe webapp: neutral near-black + Mistral orange.
+/* ReVibe design tokens — matches the Vibe webapp: neutral near-black + Mistral orange.
    Themes are variable sets keyed by <html data-theme="...">; "dark" is the default. */
 @layer base {
   :root {

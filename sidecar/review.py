@@ -248,7 +248,7 @@ async def rewind(sid: str, entry_id: str, r: RewindReq) -> dict:
             "entryId": entry_id, "restoreFiles": r.restore_files, "inplace": True}, timeout=120))[2] or {}
     except HTTPException as e:
         if e.status_code == 409 and "Cannot find user entry" in str(e.detail):
-            raise HTTPException(409, "This message was sent before VibeDeck recorded message ids, so Vibe "
+            raise HTTPException(409, "This message was sent before ReVibe recorded message ids, so Vibe "
                                      "cannot rewind to it. Later messages can be rewound.") from e
         raise
     return {"message": res.get("message", ""), "restoredPaths": res.get("restoredPaths", []),

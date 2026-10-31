@@ -34,7 +34,7 @@ export function ExtensionsView() {
           </div>
         </div>
         <h2 className="mt-6 text-2xl font-semibold">Vibe CLI</h2><p className="mt-2 text-sm text-text-faint">By Mistral AI</p>
-        <p className="mt-6 max-w-4xl text-sm leading-relaxed">Work on code from your terminal with the same sessions, tools, and configuration you use in VibeDeck. Review changes, explain a project, or continue a desktop conversation with the CLI handoff button.</p>
+        <p className="mt-6 max-w-4xl text-sm leading-relaxed">Work on code from your terminal with the same sessions, tools, and configuration you use in ReVibe. Review changes, explain a project, or continue a desktop conversation with the CLI handoff button.</p>
         <p className="mt-4 text-xs text-text-muted">{health?.vibe_cli ? "Vibe CLI is installed on this machine." : "Vibe CLI was not detected. Install it before starting a local session."}</p>
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
           <CopyCommand title="1. Install Vibe CLI" command="curl -LsSf https://mistral.ai/vibe/install.sh | bash" />
@@ -42,7 +42,7 @@ export function ExtensionsView() {
         </div>
         <details className="mt-5 text-sm"><summary className="w-fit cursor-pointer text-text-muted hover:text-text">Advanced</summary>
           <div className="mt-4 space-y-3 text-sm text-text-muted">
-            <p>VibeDeck shares the CLI session store and configuration under <code>$VIBE_HOME</code>, which defaults to <code>~/.vibe</code>. Only one process can write to a session at a time.</p>
+            <p>ReVibe shares the CLI session store and configuration under <code>$VIBE_HOME</code>, which defaults to <code>~/.vibe</code>. Only one process can write to a session at a time.</p>
             <p>Finish or stop the current turn before choosing Continue in the Vibe CLI. Close the terminal session before resuming in desktop.</p>
             <p>For a cloud handoff, continue in the CLI and use <code>/teleport</code>. This is a one-way move to Vibe Code Web, requires an eligible Mistral account and a GitHub-connected repository, and does not support third-party models. Local Work chats stay local.</p>
             <a href="https://docs.mistral.ai/vibe/code/cli/teleport-cli-web" target="_blank" rel="noreferrer" className="inline-flex text-primary hover:underline">Read the cloud handoff requirements</a>

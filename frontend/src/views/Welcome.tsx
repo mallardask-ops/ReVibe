@@ -5,7 +5,7 @@ import {
   MoreHorizontal, ShieldAlert, Sparkles,
 } from "lucide-react";
 import { Composer, type ImageAttachment } from "@/components/Composer";
-import { MistralLogo } from "@/components/Logo";
+import { ReVibeLogo } from "@/components/Logo";
 import { WelcomeTour } from "@/components/WelcomeTour";
 import { ProjectPicker, rememberCwd } from "@/components/ProjectPicker";
 import { BranchPicker } from "@/components/BranchPicker";
@@ -126,7 +126,7 @@ export function Welcome() {
       >
         {/* centered block: logo, greeting, composer */}
         <div className="my-auto w-full max-w-3xl mx-auto px-6 py-8">
-          <MistralLogo size={48} className="vd-reveal mb-6 ml-5" />
+          <ReVibeLogo size={48} className="vd-reveal mb-6 ml-4" />
           <h1
             className="px-5 text-[32px] leading-10 font-normal text-text mb-5 vd-reveal"
             style={{ animationDelay: "70ms" }}

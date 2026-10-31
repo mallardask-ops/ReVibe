@@ -8,7 +8,7 @@ const STEPS = [
   { icon: Keyboard, title: "Review and steer", body: "Changes shows every edit, ready to keep or undo. Any of your messages can rewind or fork the conversation. Press ? for shortcuts." },
 ];
 
-/** Three short cards for someone opening VibeDeck for the first time; never shown again once closed. */
+/** Three short cards for someone opening ReVibe for the first time; never shown again once closed. */
 export function WelcomeTour() {
   const [step, setStep] = React.useState<number | null>(() => {
     try { return localStorage.getItem(KEY) ? null : 0; } catch { return null; }

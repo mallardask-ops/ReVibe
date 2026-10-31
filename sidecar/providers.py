@@ -1,4 +1,4 @@
-"""Multi-provider management for VibeDeck.
+"""Multi-provider management for ReVibe.
 
 Lets the user add AI providers beyond the built-in Mistral one and use their
 models anywhere a vibe model can be used (session model pickers, defaults) or
@@ -58,7 +58,7 @@ RESERVED_PROVIDER = "mistral"
 
 # Bases are protocol-specific: Vibe appends /v1/messages for Anthropic.
 PRESETS = [
-    {"name": "codex", "label": "Codex / ChatGPT sign-in", "api_base": "http://127.0.0.1:9377/api/codex/v1", "api_style": "openai", "api_key_env_var": "VIBEDECK_CODEX_TOKEN", "help": "Uses the official Codex CLI's saved ChatGPT login. Text/tool messages only; output limits are advisory in the native Codex protocol. No OAuth token is copied. VibeDeck must be running for CLI access to this provider."},
+    {"name": "codex", "label": "Codex / ChatGPT sign-in", "api_base": "http://127.0.0.1:9377/api/codex/v1", "api_style": "openai", "api_key_env_var": "VIBEDECK_CODEX_TOKEN", "help": "Uses the official Codex CLI's saved ChatGPT login. Text/tool messages only; output limits are advisory in the native Codex protocol. No OAuth token is copied. ReVibe must be running for CLI access to this provider."},
     {"name": "openai", "label": "OpenAI API / Codex API", "api_base": "https://api.openai.com/v1", "api_style": "openai-responses", "api_key_env_var": "OPENAI_API_KEY", "help": "Use an OpenAI API key and a model available to your API account."},
     {"name": "claude", "label": "Claude API", "api_base": "https://api.anthropic.com", "api_style": "anthropic", "api_key_env_var": "ANTHROPIC_API_KEY", "help": "Use an Anthropic API key. Claude web subscriptions are separate."},
     {"name": "deepseek", "label": "DeepSeek API", "api_base": "https://api.deepseek.com", "api_style": "openai", "api_key_env_var": "DEEPSEEK_API_KEY", "help": "Enter the model ID enabled for your DeepSeek account."},

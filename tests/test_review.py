@@ -140,4 +140,4 @@ def test_rewinding_an_untracked_message_explains_why(client, tmp_path):
     from vibe_bridge import BridgeError
     bridge.failures["session/rewind"] = BridgeError(-32603, "Cannot find user entry: user-turn-abc-1")
     r = client.post(f"/api/sessions/{sid}/rewind/user-turn-abc-1", json={})
-    assert r.status_code == 409 and "before VibeDeck recorded message ids" in r.json()["detail"]
+    assert r.status_code == 409 and "before ReVibe recorded message ids" in r.json()["detail"]

@@ -11,7 +11,7 @@ import { LANES, type useSessions, type useHealth } from "@/hooks/useSessions";
 import type { CloudSession, Lane, Session } from "@/lib/types";
 import { refreshCloud, signInToCloud, useCloud, type CloudState } from "@/lib/cloud";
 import { AccountMenu } from "./AccountMenu";
-import { MistralLogo } from "./Logo";
+import { MistralLogo, ReVibeLogo } from "./Logo";
 import { menuItem, menuPanel, usePresence } from "./ui";
 
 /** One sidebar row: 32px tall, 10px inset, 8px radius — the webapp's menu button. */
@@ -213,16 +213,14 @@ export function Sidebar({
             <button
               ref={menuButtonRef}
               type="button"
-              aria-label="Vibe menu"
+              aria-label="ReVibe menu"
               aria-expanded={menuOpen}
               aria-controls="vibe-navigation"
               onClick={() => setMenuOpen(open => !open)}
               className={cn("flex h-8 items-center gap-2 rounded-md pl-1 pr-1.5 text-text transition-colors hover:bg-surface-muted active:bg-surface-muted/70", menuOpen && "bg-surface-muted")}
             >
-              <span aria-hidden="true" className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-primary">
-                <MistralLogo size={15} mono className="fill-white" />
-              </span>
-              <span className="text-base font-semibold leading-none">Vibe</span>
+              <ReVibeLogo size={24} tile className="shrink-0" />
+              <span className="text-base font-semibold leading-none">ReVibe</span>
               <ChevronDown size={16} className={cn("text-text-muted transition-transform duration-150 motion-reduce:transition-none", menuOpen && "rotate-180")} />
             </button>
             {menuPresence.mounted && <nav id="vibe-navigation" aria-label="Vibe navigation" data-state={menuPresence.state} className={cn(menuPanel, "absolute left-0 top-full z-50 mt-1 flex w-[232px] max-h-[calc(100vh-8rem)] flex-col gap-1 overflow-y-auto")}>

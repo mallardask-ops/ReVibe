@@ -167,8 +167,8 @@ export function AppShell() {
         onToggleSidebar={() => setCollapsed((c) => !c)}
       />}
       {welcome && <dialog ref={welcomeRef} aria-labelledby="mistral-welcome-title" onCancel={event => { event.preventDefault(); dismissWelcome(); }} className="w-[calc(100%_-_2rem)] max-w-md rounded-xl border border-border bg-surface-raised p-6 text-text shadow-lg backdrop:bg-black/70">
-        <h2 id="mistral-welcome-title" className="text-lg font-semibold">Welcome to VibeDeck</h2>
-        <p className="mt-3 text-sm text-text-muted">Connect your Mistral account with Google or email for your desktop workspace and subscription usage. Sign-in opens in a Chromium-based browser (Chrome, Brave, Helium…); your workspace then runs inside VibeDeck.</p>
+        <h2 id="mistral-welcome-title" className="text-lg font-semibold">Welcome to ReVibe</h2>
+        <p className="mt-3 text-sm text-text-muted">Connect your Mistral account with Google or email for your desktop workspace and subscription usage. Sign-in opens in a Chromium-based browser (Chrome, Brave, Helium…); your workspace then runs inside ReVibe.</p>
         <p className="mt-3 text-xs text-text-faint">Your CLI account is shared with Vibe. If it needs setup, run <code>vibe --setup</code> in your terminal. Studio uses a separate Mistral API key.</p>
         {signInError && <p role="alert" className="mt-3 text-sm text-danger">{signInError}</p>}
         {connecting && <div className="mt-5"><SignInConfirmation /></div>}

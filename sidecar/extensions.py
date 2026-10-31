@@ -1,4 +1,4 @@
-"""MCP servers, connectors and the skill catalog, managed from VibeDeck.
+"""MCP servers, connectors and the skill catalog, managed from ReVibe.
 
 ``mcp/read`` lists the MCP servers in ``~/.vibe/config.toml`` together with
 the Mistral connectors the account can use, each with its status and tools.

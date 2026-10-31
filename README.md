@@ -1,94 +1,107 @@
-# VibeDeck
+<div align="center">
 
-**Created by OSINTCabal**
+<img src="packaging/brand/png/128x128.png" width="96" alt="ReVibe logo">
 
-Version **1.1.0**.
+# ReVibe
 
-A Mistral Vibe desktop app for **Fedora and Debian Linux**. Chat, write code, and pick up your coding sessions in the Vibe CLI. Mistral is the default provider. VibeDeck is part of my desktop app series alongside [GrokDeck](https://github.com/OSINTCabal/GrokDeck), [KimiDeck](https://github.com/OSINTCabal/KimiDeck), and [MinimaxDeck](https://github.com/OSINTCabal/MinimaxDeck).
+**A desktop app for [Mistral Vibe](https://github.com/mistralai/mistral-vibe).**
+Chat and code with Vibe in a real window: review every edit, rewind any message, queue the next idea while the agent works, and pick the same session up in the CLI.
 
-[Install](docs/INSTALL.md) · [Development](docs/DEVELOPMENT.md) · [Verification](docs/VERIFICATION.md)
+[**Download**](https://github.com/mallardask-ops/ReVibe/releases/latest) · [Install from source](docs/INSTALL.md) · [Development](docs/DEVELOPMENT.md)
 
-![VibeDeck Work with the Context sidebar](docs/screenshots/work.png)
+![Release](https://img.shields.io/github/v/release/mallardask-ops/ReVibe?color=ff8205&label=release)
+![Platforms](https://img.shields.io/badge/Linux%20%C2%B7%20Windows-1f1f23?label=runs%20on)
+![License](https://img.shields.io/badge/license-MIT-1f1f23)
 
-## Features
+</div>
 
-Chat with streamed responses and visible model thinking, approve tool calls, and use Skills and MCP from the desktop. Coding sessions and local settings are shared with the Vibe CLI. Add other providers as your main model or use them as subagents.
+![A ReVibe session: the agent edits weather.py, with line counts on each step](docs/screenshots/chat.png)
 
-Code mode includes Ask, Plan, Accept edits, and Full auto. Built-in subagents work with Mistral and your other configured models.
+## Download
 
-Skills, Knowledge, Connectors, Libraries, Instructions, and Scheduled open your Mistral web workspace inside the app. Docs and Admin open there too. Sign in with Google or email through Chrome or Chromium; the connection stays saved across launches. Connectors also lists local CLI MCP servers. Settings covers providers, models, local configuration, zoom, and seven themes.
+| Platform | File | Notes |
+| --- | --- | --- |
+| Linux (x86_64) | `ReVibe-1.0.0-x86_64.AppImage` | `chmod +x` it and run. No install needed. |
+| Windows 10/11 | `ReVibe-1.0.0-setup.exe` | Installer with Start menu shortcut. |
+| Windows 10/11 | `ReVibe-1.0.0-portable.exe` | One file, nothing installed. |
+
+All files are on the [releases page](https://github.com/mallardask-ops/ReVibe/releases/latest), with `SHA256SUMS.txt`.
+
+ReVibe drives the Vibe CLI you already have. Install it once and sign in:
+
+```bash
+uv tool install mistral-vibe
+vibe --setup
+```
+
+The Windows builds are new in 1.0 and less tested than Linux. They are not code-signed, so SmartScreen asks before the first launch.
+
+## What it does
+
+**Code with an agent you can steer.** Send a request, watch each step, and keep typing: messages queue up and run next. Stop a run with <kbd>Ctrl</kbd>+<kbd>.</kbd>. Start a session in its own git worktree for risky work, pick the branch under the message box, and run your own shell commands with `!`.
+
+**Review before you keep.** Every edit shows its line counts and opens to the changed lines. The Changes panel lists everything the agent touched, turn by turn, ready to keep or revert per file or per hunk. Any of your messages can rewind the conversation, with or without its file changes, or fork it into a new session.
+
+**See what runs alongside.** Subagents and background processes have their own panel with live output. Approvals and questions from the agent appear inline, and answered ones fold into one quiet line.
+
+**Stay in the loop.** A dot in the sidebar tells you a run finished, failed or stopped while you were elsewhere. Sounds come from your system's sound theme (Plasma's Ocean or the freedesktop set), and desktop notifications carry the first line of the reply. Each is switchable per event.
+
+**Pick it up anywhere.** Sessions live in the Vibe CLI's own store: finish a turn here and continue in the terminal, or the other way round. Vibe names sessions for you, projects sort by recent activity, and favourites can be pinned to the top.
+
+**Bring your providers.** Mistral is the default. Add Codex/ChatGPT, OpenAI, Claude, DeepSeek, Z.ai, MiniMax, Google AI Studio, Ollama or any compatible endpoint as the main model or as subagent workers.
+
+**Extend it.** Manage MCP servers and Mistral connectors, install skills from your Vibe registry or import them from Claude Code and Codex, and set prompts to repeat on a schedule.
+
+<table>
+<tr>
+<td><img src="docs/screenshots/welcome.png" alt="The welcome screen with the Blocks background"></td>
+<td><img src="docs/screenshots/review.png" alt="The Changes panel next to a conversation"></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/settings.png" alt="Notification settings with sounds per event"></td>
+<td><img src="docs/screenshots/light.png" alt="The light theme with the Sunset background"></td>
+</tr>
+</table>
+
+## Make it yours
+
+Seven themes, four animated backgrounds (Blocks, Strings, Mosaic, Sunset) that calm down while you read and liven up while the model works, app zoom, and a tray mode that keeps ReVibe running when the window closes. Everything is in **Settings**, sorted into General, Appearance, Notifications, Providers, Models, Agents, Desktop and About.
+
+## Keyboard
+
+| Keys | Does |
+| --- | --- |
+| <kbd>Ctrl</kbd>+<kbd>K</kbd> | Command palette |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd> | New session |
+| <kbd>Ctrl</kbd>+<kbd>B</kbd> | Show or hide the sidebar |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> | Switch between Work and Code |
+| <kbd>Ctrl</kbd>+<kbd>.</kbd> | Stop the run |
+| <kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Previous or next message of yours |
+| <kbd>?</kbd> | All shortcuts |
 
 ## How it works
 
-1. **Desktop and CLI:** A local service runs Vibe coding sessions. Both share the CLI's session files and configuration. Finish a turn in one, then continue in the other.
-2. **Web workspace:** Context pages save to your Mistral account. Local chats, CLI skills, and MCP servers stay separate and are not automatically uploaded.
-3. **Providers and agents:** Add credentials and models in Settings, pick your main model, and ask it to delegate. Workers use your configured providers and their billing.
+ReVibe is an Electron window over a small local service (the sidecar, Python and FastAPI) that talks to Vibe's own `vibe-app-server` over JSON-RPC. The sidecar listens on `127.0.0.1` only. Conversations stay in Vibe's session store, API keys in your system keyring, and nothing is uploaded unless you use a web workspace feature on purpose.
 
-## Providers
+The AppImage and the Windows builds carry the sidecar as a bundled binary, so they need no Python or Node. Only the Vibe CLI has to be installed.
 
-| Provider | Connection |
-| --- | --- |
-| Mistral | Vibe CLI credentials; API key for local API tools |
-| Codex / ChatGPT | Official Codex CLI browser sign-in through the local bridge |
-| OpenAI / Codex API | API key, OpenAI Responses |
-| Claude | API key, Anthropic Messages |
-| DeepSeek | API key, OpenAI-compatible |
-| Z.ai | API key, OpenAI-compatible |
-| MiniMax.io | Token Plan or API key, OpenAI-compatible |
-| Google AI Studio | Gemini API key, OpenAI-compatible |
-| Ollama | Local OpenAI-compatible endpoint, no key required |
-
-Add custom providers in **Settings → Providers** using a base URL, model ID, and optional API key. Register models in **Settings → Models**.
-
-| Custom API format | Settings value |
-| --- | --- |
-| OpenAI Chat Completions | `openai` |
-| OpenAI Responses | `openai-responses` |
-| Anthropic Messages | `anthropic` |
-| Vibe reasoning-compatible | `reasoning` |
-
-Tool calling, reasoning, and subagent delegation depend on the model. MiniMax plan and API quotas are separate. Z.ai Coding Plan access depends on its supported-tool policy.
-
-## Subagents
-
-Choose **Settings → Config → Subagents** for delegation on request, automatic delegation for substantial work, or Off. Set worker quality and the batch limit there.
-
-Ask “Send off subagents to review this” or “Use DeepSeek and Z.ai agents with strong models and high thinking.” Named providers, model aliases, and thinking levels are respected. Automatic selection uses model-name and task hints rather than benchmark rankings.
-
-Workers can review context, read files, or edit when requested. The main agent runs commands and checks their work. Two workers can run at once, with one editing worker per project. Jobs have token and time limits. Failed jobs do not retry or switch providers automatically.
-
-![Built-in subagent settings](docs/screenshots/subagents.png)
-
-## Installation
-
-Fedora and Debian use **one repository and the same Electron installer**. Follow the [installation guide](docs/INSTALL.md) for system packages, runtime dependencies, and Vibe CLI setup, then run:
+## Build it yourself
 
 ```bash
+# the app as a user install on Linux (Fedora, Debian and friends)
 bash packaging/install.sh
-vibedeck
+revibe
+
+# the release files
+cd frontend && pnpm install --frozen-lockfile && pnpm build && cd ..
+uv run --with pyinstaller python packaging/build_sidecar.py
+cd shell/electron && npm ci && npx electron-builder --linux AppImage   # or: --win nsis portable
 ```
 
-Verified on Fedora 44 and Debian 12. Linux Mint has not had a separate desktop test. Tauri packages are older experimental builds without the full Electron workspace and browser connection.
+Pushing a `v*` tag builds the AppImage and both Windows files in GitHub Actions and publishes them as a release. See [development](docs/DEVELOPMENT.md) for running from a checkout and the test suites.
 
-## Screenshots
+## Credits
 
-Provider settings:
+ReVibe is a fork of [VibeDeck](https://github.com/OSINTCabal/VibeDeck) by OSINTCabal, carried on independently from version 1.0. It is not affiliated with or endorsed by Mistral AI; Mistral, Vibe and Le Chat are their trademarks. Notification sounds are not bundled: ReVibe plays the sound themes already installed on your computer (Ocean by Guilherme Marçal Silva for KDE, CC BY-SA 4.0).
 
-![Providers, Models, and Config settings](docs/screenshots/providers.png)
-
-Subscription usage:
-
-![Mistral subscription usage and account controls](docs/screenshots/usage.png)
-
-Screenshots use isolated sample workspaces. See [more screenshots](docs/screenshots).
-
-## Notes
-
-- VibeDeck is released under the [MIT license](LICENSE).
-- The bottom-left account menu handles browser sign-in, account switching, and sign-out. CLI credentials and API keys are separate.
-- **Connect services** completes web connector authorization through the browser. Local MCP servers share the CLI configuration; they are not automatically registered as web connectors.
-- Local chats and files are not automatically uploaded to the web workspace. API tools use API billing, separate from your Vibe subscription. Viewing usage or local connectors makes no model requests.
-
-## Coming soon
-
-Full Mistral Studio integration and more desktop features are planned. For now, Studio opens in your browser from the Vibe menu.
+Released under the [MIT license](LICENSE).

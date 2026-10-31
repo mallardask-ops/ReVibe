@@ -1,6 +1,6 @@
 """Alert sounds from the freedesktop sound themes installed on this computer.
 
-VibeDeck ships no audio: it plays the system's own themes (Plasma's Ocean,
+ReVibe ships no audio: it plays the system's own themes (Plasma's Ocean,
 the freedesktop default) for a finished run, a failed run and a request for
 the user's attention. Only themes that are installed are offered.
 """

@@ -1,5 +1,5 @@
 /**
- * VibeDeck themes. Themes are pure CSS-variable sets keyed by a
+ * ReVibe themes. Themes are pure CSS-variable sets keyed by a
  * `data-theme` attribute on <html> (see index.css); this module owns the
  * id list, persistence (localStorage), and applying the attribute.
  */

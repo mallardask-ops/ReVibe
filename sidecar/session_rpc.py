@@ -2,7 +2,7 @@
 
 Feature modules (review, queue, worktrees, …) live in their own files with an
 ``APIRouter`` and call the session's app-server through :func:`session_call`.
-The server registers how a VibeDeck session id maps to a running bridge with
+The server registers how a ReVibe session id maps to a running bridge with
 :func:`configure` at import time, which keeps the routers free of a circular
 import on ``vibedeck_server``.
 """
@@ -27,7 +27,7 @@ def configure(ensure_bridge: EnsureBridge) -> None:
 
 async def session_call(sid: str, method: str, params: Optional[dict] = None,
                        timeout: float = 90.0) -> tuple[Any, str, Any]:
-    """Call ``method`` for VibeDeck session ``sid``; returns ``(bridge, esid, result)``.
+    """Call ``method`` for ReVibe session ``sid``; returns ``(bridge, esid, result)``.
 
     ``sessionId`` is filled in with the vibe session id. A refusal by the
     app-server becomes HTTP 409 with its message, a lost connection 502.

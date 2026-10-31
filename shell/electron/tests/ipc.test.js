@@ -8,11 +8,11 @@ test('usage IPC rejects remote callers and preserves workspace when sign-in is c
   let reads = 0, resets = 0, focused = 0;
   const usage = { read: () => { reads++; return { status: 'ready' }; }, connect() {}, disconnect() {} };
   const electron = { ipcMain: { handle: (name, fn) => handlers.set(name, fn) },
-    app: { setDesktopName(name) {assert.equal(name,'vibedeck.desktop');}, requestSingleInstanceLock: () => true, whenReady: () => ({ then() {} }), on() {} } };
+    app: { setDesktopName(name) {assert.equal(name,'revibe.desktop');}, getPath: name => '/tmp/' + name, setPath(name, value) {assert.equal(value,'/tmp/appData/vibedeck-shell');}, requestSingleInstanceLock: () => true, whenReady: () => ({ then() {} }), on() {} } };
   const moduleObject = { exports: {} };
   const source = fs.readFileSync(require.resolve('../main'), 'utf8');
   new Function('require', 'module', '__dirname', source + '\nmodule.exports = value => { win = value; };')(
-    name => name === 'electron' ? electron : name === './usage' ? usage : name === './desktop' ? { createDesktop: () => ({ get: () => ({ closeToTray: false, tray: true }), update: async () => {}, setUsage() {}, keepRunning: () => false }) } : name === './workspace' ? { createWorkspace: () => ({ open() {}, resize() {}, close() {}, reset() { resets++; } }) } : require(name), moduleObject, path.join(__dirname, '..'));
+    name => name === 'electron' ? electron : name === './usage' ? usage : name === './sidecar' ? { ensureSidecar: async () => {}, stopSidecar() {} } : name === './desktop' ? { createDesktop: () => ({ get: () => ({ closeToTray: false, tray: true }), update: async () => {}, setUsage() {}, keepRunning: () => false }) } : name === './workspace' ? { createWorkspace: () => ({ open() {}, resize() {}, close() {}, reset() { resets++; } }) } : require(name), moduleObject, path.join(__dirname, '..'));
   const contents = {};
   moduleObject.exports({ webContents: contents, isDestroyed: () => false, focus: () => {focused++;} });
   const origin = new URL(process.env.VIBEDECK_URL || `http://127.0.0.1:${process.env.VIBEDECK_PORT || 9377}`).origin;
@@ -38,7 +38,7 @@ test('usage IPC rejects remote callers and preserves workspace when sign-in is c
   usage.connect=async()=>true;
   assert.equal(await handlers.get('workspace:signin')(trusted),true);
   assert.equal(resets,1);
-  assert.equal(focused,5,'Success, cancellation and failure all return focus to VibeDeck');
+  assert.equal(focused,5,'Success, cancellation and failure all return focus to ReVibe');
   usage.connect=async(_win,destination)=>{assert.equal(destination,'connectors');return true;};
   assert.equal(await handlers.get('workspace:connectors')(trusted),true);
   assert.equal(resets,2);

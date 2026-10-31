@@ -12,7 +12,7 @@ export interface Session {
   last_event_id: number;
   created_at: number;
   updated_at: number;
-  /** where the session came from: created in VibeDeck or imported from the vibe CLI store */
+  /** where the session came from: created in ReVibe or imported from the vibe CLI store */
   origin?: "vibedeck" | "vibe";
   /** non-fatal setup issues from creation (e.g. model/agent not applied) */
   warnings?: string[];
@@ -77,7 +77,7 @@ export interface Health {
   user?: string;
 }
 
-/** The installed Vibe CLI and whether it is older than VibeDeck expects. */
+/** The installed Vibe CLI and whether it is older than ReVibe expects. */
 export interface VibeInstall {
   version: string | null;
   recommended: string;

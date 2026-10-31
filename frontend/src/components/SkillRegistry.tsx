@@ -10,7 +10,7 @@ const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 /**
  * Every skill in one list: the account's Vibe registry (install, update to
  * the latest version, switch off or remove) and, below it, skills that only
- * exist on this computer. Applies to new sessions in VibeDeck and the CLI.
+ * exist on this computer. Applies to new sessions in ReVibe and the CLI.
  */
 export function SkillRegistry({ local, query }: { local: SkillInfo[]; query: string }) {
   const [data, setData] = React.useState<Registry | null>(null);

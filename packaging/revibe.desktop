@@ -1,13 +1,13 @@
 [Desktop Entry]
 Type=Application
 Version=1.0
-Name=VibeDeck
-GenericName=Mistral Vibe desktop app
+Name=ReVibe
+GenericName=Desktop app for Mistral Vibe
 Comment=Chat and code with Mistral Vibe
-Exec=vibedeck %U
-Icon=vibedeck
+Exec=revibe %U
+Icon=revibe
 Terminal=false
 Categories=Development;
 Keywords=mistral;vibe;ai;agent;chat;code;studio;
 StartupNotify=true
-StartupWMClass=vibedeck
+StartupWMClass=revibe

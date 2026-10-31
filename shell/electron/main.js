@@ -1,4 +1,4 @@
-// VibeDeck Electron shell — a frameless desktop window hosting the VibeDeck SPA.
+// ReVibe Electron shell — a frameless desktop window hosting the ReVibe SPA.
 //
 // The window has no system title bar (frame: false); the frontend renders its
 // own in-app title bar (TitleBar.tsx) and drives window controls through the
@@ -10,8 +10,10 @@
 const { app, BrowserWindow, ipcMain, screen, dialog, session, shell } = require("electron");
 const path = require("path");
 const fs = require("node:fs/promises");
-if (process.platform === "linux") app.setDesktopName("vibedeck.desktop");
-// One VibeDeck per user: relaunching (e.g. from the app drawer while hidden in
+// Keep the profile of the VibeDeck days (Mistral sign-in, window prefs) under the new name.
+app.setPath("userData", process.env.VIBEDECK_USER_DATA || path.join(app.getPath("appData"), "vibedeck-shell"));
+if (process.platform === "linux") app.setDesktopName("revibe.desktop");
+// One ReVibe per user: relaunching (e.g. from the app drawer while hidden in
 // the tray) brings the existing window back instead of opening a second shell.
 if (!app.requestSingleInstanceLock()) app.exit(0);
 const ZOOM_FACTORS = [0.75, 0.9, 1, 1.1, 1.25, 1.5];
@@ -23,6 +25,7 @@ const URL = process.env.VIBEDECK_URL || `http://127.0.0.1:${PORT}`;
 let win = null;
 let pendingRoute = null;
 const usage = require("./usage");
+const { ensureSidecar, stopSidecar } = require("./sidecar");
 const desktop = require("./desktop").createDesktop({
   getWindow: () => win,
   showWindow,
@@ -77,8 +80,8 @@ function createWindow() {
     minHeight: 600,
     frame: false, // true frameless — the SPA draws its own title bar
     backgroundColor: "#0a0a0a",
-    title: "Vibe",
-    icon: path.join(__dirname, "vibedeck-icon.png"), // dark app icon (taskbar/dock)
+    title: "ReVibe",
+    icon: path.join(__dirname, "revibe-icon.png"), // dark app icon (taskbar/dock)
     show: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -211,6 +214,7 @@ app.whenReady().then(async () => {
   } catch { /* Missing or invalid display preferences use 100%. */ }
   await desktop.load();
   await prepareSession();
+  void ensureSidecar(URL, PORT);
   createWindow();
   desktop.start();
 });
@@ -224,6 +228,7 @@ app.on("before-quit", event => {
   stopping = true;
   workspace.close();
   desktop.destroy();
+  stopSidecar();
   usage.shutdown().catch(() => {}).finally(() => app.quit());
 });
 app.on("activate", () => showWindow());

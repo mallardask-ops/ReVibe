@@ -1,11 +1,11 @@
-"""VibeDeck sidecar — local control plane for the Mistral Vibe app-server + API.
+"""ReVibe sidecar — local control plane for the Mistral Vibe app-server + API.
 
 Runs on http://127.0.0.1:9377. Responsibilities:
   * Drive the Vibe CLI through its native ``vibe-app-server`` JSON-RPC interface
     (sessions, turns, streaming events, approvals, diffs, worktrees, skills, MCP).
   * Serve the direct Mistral API chat surface (Chat lane) and the Studio
     playground (models, completions, usage).
-  * Persist VibeDeck metadata, cost tracking, and an audit log in SQLite.
+  * Persist ReVibe metadata, cost tracking, and an audit log in SQLite.
   * Serve the built frontend (./dist) on the same origin.
 
 OPSEC: binds to 127.0.0.1 only; no telemetry; secrets resolved from env/keyring,
@@ -99,7 +99,13 @@ from vibe_bridge import (
 from vibe_sessions import LISTER_KEY, VibeSessionSync, cleanup_store_dir
 
 PORT = int(os.environ.get("VIBEDECK_PORT", "9377"))
-DATA_DIR = Path(os.environ.get("VIBEDECK_DATA", Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")) / "vibedeck"))
+def _default_data_dir() -> Path:
+    if os.name == "nt":
+        return Path(os.environ.get("LOCALAPPDATA") or Path.home() / "AppData/Local") / "ReVibe"
+    return Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")) / "vibedeck"
+
+
+DATA_DIR = Path(os.environ.get("VIBEDECK_DATA") or _default_data_dir())
 DB_PATH = DATA_DIR / "vibedeck.db"
 LOG_DIR = DATA_DIR / "logs"
 
@@ -571,7 +577,7 @@ async def lifespan(_: FastAPI):
     _stale_agent_policy.clear()
 
 
-app = FastAPI(title="VibeDeck Sidecar", lifespan=lifespan)
+app = FastAPI(title="ReVibe Sidecar", lifespan=lifespan)
 LOCAL_ORIGINS = {"http://localhost:5173", "http://127.0.0.1:5173",
                  f"http://localhost:{PORT}", f"http://127.0.0.1:{PORT}",
                  "tauri://localhost", "http://tauri.localhost"}
@@ -628,7 +634,7 @@ async def health() -> dict:
         "api_key_source": kstat["source"],
         "default_model": DEFAULT_MODEL,
         "default_agent": DEFAULT_AGENT,
-        "version": "1.1.0",
+        "version": "1.0.0",
         "vibe": vibe_install.info(srv),
         "user": getpass.getuser(),
     }
@@ -802,7 +808,7 @@ async def put_provider(r: ProviderUpsertReq) -> dict:
     if provider["name"] == "codex":
         if (provider["api_base"] != f"http://127.0.0.1:{PORT}/api/codex/v1" or
                 provider["api_key_env_var"] != "VIBEDECK_CODEX_TOKEN" or provider["api_style"] != "openai"):
-            raise HTTPException(400, "Codex OAuth must use VibeDeck's local native bridge")
+            raise HTTPException(400, "Codex OAuth must use ReVibe's local native bridge")
         try:
             if not provider_config.provider_key("VIBEDECK_CODEX_TOKEN"):
                 set_provider_key("VIBEDECK_CODEX_TOKEN", secrets.token_urlsafe(32))
@@ -1230,7 +1236,7 @@ async def create_session(s: SessionCreate) -> dict:
 
 @app.get("/api/sessions")
 async def list_sessions() -> dict:
-    """VibeDeck's sessions, merged with the vibe CLI's shared store.
+    """ReVibe's sessions, merged with the vibe CLI's shared store.
 
     The merge needs a running app-server, which takes seconds to start on a
     cold launch: when it is not done shortly, the rows already known are
@@ -1418,7 +1424,7 @@ async def fork_session(sid: str, r: ForkReq) -> dict:
         res = await bridge.call("session/fork", {"sourceSessionId": esid, **params}, timeout=120)
     except BridgeError as e:
         if "Cannot find user entry" in e.message:
-            raise HTTPException(409, "This message was sent before VibeDeck recorded message ids, so Vibe "
+            raise HTTPException(409, "This message was sent before ReVibe recorded message ids, so Vibe "
                                      "cannot fork from it. Fork the whole session instead.") from e
         raise HTTPException(409, e.message) from e
     session = ((res or {}).get("state") or {}).get("session") or {}

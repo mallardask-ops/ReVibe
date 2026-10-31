@@ -45,7 +45,7 @@ async function until(check, message) {
     });
     await page.getByRole('button', {name:'Sign in to Mistral',exact:true}).click();
     await page.getByRole('button', {name:'Cancel sign-in',exact:true}).click();
-    await page.getByRole('heading', {name:'Welcome to VibeDeck',exact:true}).waitFor();
+    await page.getByRole('heading', {name:'Welcome to ReVibe',exact:true}).waitFor();
     await page.getByRole('button', {name:'Sign in to Mistral',exact:true}).click();
     await page.getByRole('button', {name:'I’ve signed in',exact:true}).click();
     await until(() => page.getByRole('dialog').count().then(count => count === 0), 'Completed sign-in left welcome dialog stuck');

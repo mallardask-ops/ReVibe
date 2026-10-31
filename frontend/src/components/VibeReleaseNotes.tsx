@@ -26,7 +26,7 @@ export function VibeReleaseNotes({ open, onClose }: { open: boolean; onClose: ()
               <div className="rounded-lg border border-border bg-surface p-3 text-sm">
                 Vibe {data.recommended} is available. Update with
                 <code className="ml-1 rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs">{data.upgradeCommand}</code>
-                , then restart VibeDeck.
+                , then restart ReVibe.
               </div>
             )}
             {data.notes.length

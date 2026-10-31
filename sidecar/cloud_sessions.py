@@ -3,7 +3,7 @@
 Mistral serves sessions only to the signed-in web app (``/api/code-trpc/*``
 behind Cloudflare), so the Electron shell reads and writes them from a page
 in the workspace partition and hands the raw tRPC responses to the sidecar.
-This module turns those responses into VibeDeck's shapes: cloud projects
+This module turns those responses into ReVibe's shapes: cloud projects
 matched to local repositories, session rows and live state, and history
 entries the conversation view already renders, open questions included.
 """

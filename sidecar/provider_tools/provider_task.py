@@ -1,4 +1,4 @@
-"""Bounded provider workers over MCP, shared by native Vibe and VibeDeck."""
+"""Bounded provider workers over MCP, shared by native Vibe and ReVibe."""
 from __future__ import annotations
 
 import asyncio
@@ -153,7 +153,7 @@ async def delegate(
     jobs: Annotated[list[AgentJob], Field(min_length=1, max_length=3)],
     automatic: bool = False,
 ) -> list[dict]:
-    """VibeDeck built-in subagents, including Mistral and other configured providers.
+    """ReVibe built-in subagents, including Mistral and other configured providers.
 
     Use when the user asks for subagents, or automatic=True only when agent_policy
     enables auto delegation. 'Use DeepSeek and Z.ai strong models/high thinking'

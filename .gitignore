@@ -25,3 +25,4 @@ shell/src-tauri/gen/
 # OS
 .DS_Store
 tsconfig.tsbuildinfo
+build/

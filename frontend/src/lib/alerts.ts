@@ -20,7 +20,7 @@ export interface AlertPrefs {
   volume: number;
   sound: Record<AlertEvent, boolean>;
   notify: Record<AlertEvent, boolean>;
-  /** play sounds while VibeDeck is the focused window too */
+  /** play sounds while ReVibe is the focused window too */
   soundWhenFocused: boolean;
 }
 
@@ -74,7 +74,7 @@ export async function playSound(event: AlertEvent, theme = prefs.theme, volume =
 
 /**
  * Sound and notification for an event. The notification shows only while
- * VibeDeck is in the background; clicking it opens the session.
+ * ReVibe is in the background; clicking it opens the session.
  */
 export function alert(event: AlertEvent, message: { title: string; body?: string; sessionId?: string }): void {
   const focused = document.hasFocus();

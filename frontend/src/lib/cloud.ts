@@ -52,7 +52,7 @@ async function collect<R extends { error?: CloudError; nextCursor: string | null
 }
 
 const failure = (error: unknown): CloudFailure => error instanceof CloudFailure
-  ? error : new CloudFailure("unavailable", "Cloud sessions could not be loaded. Check that VibeDeck's sidecar is running.");
+  ? error : new CloudFailure("unavailable", "Cloud sessions could not be loaded. Check that ReVibe's sidecar is running.");
 
 export function refreshCloud(): Promise<void> {
   const bridge = window.vibedeck?.cloud;
@@ -84,7 +84,7 @@ export async function signInToCloud(): Promise<void> {
 
 export async function loadCloudMessages(sessionId: string): Promise<HistoryEntry[]> {
   const bridge = window.vibedeck?.cloud;
-  if (!bridge) throw new CloudFailure("unavailable", "Cloud sessions open in the VibeDeck desktop app.");
+  if (!bridge) throw new CloudFailure("unavailable", "Cloud sessions open in the ReVibe desktop app.");
   try {
     return await collect(
       cursor => bridge.read("sessions.messages", { sessionId, ...(cursor ? { cursor } : {}) })
@@ -97,7 +97,7 @@ export async function loadCloudMessages(sessionId: string): Promise<HistoryEntry
 
 export async function loadCloudState(sessionId: string): Promise<CloudSessionState> {
   const bridge = window.vibedeck?.cloud;
-  if (!bridge) throw new CloudFailure("unavailable", "Cloud sessions open in the VibeDeck desktop app.");
+  if (!bridge) throw new CloudFailure("unavailable", "Cloud sessions open in the ReVibe desktop app.");
   let result;
   try { result = await parseCloudSessionState(await bridge.read("sessions.byId", { sessionId })); } catch (error) { throw failure(error); }
   if (result.error) throw new CloudFailure(result.error.code, result.error.message);
@@ -108,7 +108,7 @@ type CloudWrite = Parameters<NonNullable<NonNullable<Window["vibedeck"]>["cloud"
 
 async function write(procedure: CloudWrite[0], params: CloudWrite[1]): Promise<void> {
   const bridge = window.vibedeck?.cloud;
-  if (!bridge?.write) throw new CloudFailure("unavailable", "Continuing cloud sessions needs the VibeDeck desktop app.");
+  if (!bridge?.write) throw new CloudFailure("unavailable", "Continuing cloud sessions needs the ReVibe desktop app.");
   let result;
   try { result = await parseCloudResult(await bridge.write(procedure, params)); } catch (error) { throw failure(error); }
   if (result.error) throw new CloudFailure(result.error.code, result.error.message);

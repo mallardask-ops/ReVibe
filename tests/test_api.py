@@ -1,4 +1,4 @@
-"""API tests for the VibeDeck sidecar (FastAPI TestClient, isolated temp DB)."""
+"""API tests for the ReVibe sidecar (FastAPI TestClient, isolated temp DB)."""
 import pytest
 import vibedeck_server
 from fastapi.testclient import TestClient

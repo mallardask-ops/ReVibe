@@ -1,17 +1,78 @@
 {
-  "name": "vibedeck-shell",
-  "version": "1.1.0",
-  "description": "VibeDeck frameless desktop shell (Electron)",
+  "name": "revibe",
+  "version": "1.0.0",
+  "description": "ReVibe, a desktop app for Mistral Vibe",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "node --test tests/*.js"
+    "test": "node --test tests/*.js",
+    "dist": "electron-builder --publish never"
   },
   "keywords": [],
   "type": "commonjs",
   "private": true,
-  "engines": { "node": ">=22.12" },
-  "dependencies": {
+  "engines": {
+    "node": ">=22.12"
+  },
+  "devDependencies": {
+    "electron-builder": "^26.18.0",
     "electron": "^44.9.1"
-  }
+  },
+  "productName": "ReVibe",
+  "author": "mallardask-ops",
+  "homepage": "https://github.com/mallardask-ops/ReVibe",
+  "license": "MIT",
+  "build": {
+    "appId": "io.github.mallardask_ops.revibe",
+    "productName": "ReVibe",
+    "artifactName": "ReVibe-${version}-${arch}.${ext}",
+    "directories": {
+      "output": "../../build/release"
+    },
+    "files": [
+      "*.js",
+      "revibe-icon.png",
+      "revibe-tray.png",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../../build/sidecar",
+        "to": "sidecar"
+      }
+    ],
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "../../packaging/brand/png",
+      "category": "Development",
+      "executableName": "revibe",
+      "synopsis": "Desktop app for Mistral Vibe",
+      "desktop": {
+        "entry": {
+          "StartupWMClass": "revibe",
+          "Name": "ReVibe"
+        }
+      },
+      "syncDesktopName": true
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "../../packaging/brand/revibe.ico"
+    },
+    "portable": {
+      "artifactName": "ReVibe-${version}-portable.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "ReVibe",
+      "artifactName": "ReVibe-${version}-setup.${ext}"
+    }
+  },
+  "desktopName": "revibe.desktop"
 }

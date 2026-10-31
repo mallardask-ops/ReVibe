@@ -1,4 +1,4 @@
-"""Vibe Code Web ("cloud") sessions for VibeDeck.
+"""Vibe Code Web ("cloud") sessions for ReVibe.
 
 The vibe app-server owns the whole flow: a project picker bound to the
 session's git repository (``vibeCode/projects/*``) and a teleport that

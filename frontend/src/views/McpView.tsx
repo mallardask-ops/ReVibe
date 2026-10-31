@@ -122,7 +122,7 @@ function SourceList({ title, empty, items, busy, onToggle, onSignIn, onSignOut, 
                     <Badge tone={status.tone}>{status.label}</Badge>
                   </div>
                   <div className="truncate text-[11px] text-text-faint" title={s.error || undefined}>
-                    {s.error || [s.name.startsWith("vibedeck_") ? "managed by VibeDeck" : null, s.kind === "server" ? s.transport : null, s.tools.length ? `${s.tools.length} tool${s.tools.length === 1 ? "" : "s"}` : null].filter(Boolean).join(" · ")}
+                    {s.error || [s.name.startsWith("vibedeck_") ? "managed by ReVibe" : null, s.kind === "server" ? s.transport : null, s.tools.length ? `${s.tools.length} tool${s.tools.length === 1 ? "" : "s"}` : null].filter(Boolean).join(" · ")}
                   </div>
                 </div>
                 {rowBusy && <Spinner />}

@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "VibeDeck",
+  "productName": "ReVibe",
   "version": "1.0.0",
   "identifier": "ai.vibedeck.app",
   "build": {
@@ -14,7 +14,7 @@
   "app": {
     "windows": [
       {
-        "title": "VibeDeck",
+        "title": "ReVibe",
         "width": 1440,
         "height": 900,
         "minWidth": 960,
@@ -36,7 +36,7 @@
       "deb"
     ],
     "icon": [
-      "../electron/vibedeck-icon.png"
+      "../electron/revibe-icon.png"
     ],
     "resources": [
       "../../sidecar",

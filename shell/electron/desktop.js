@@ -44,9 +44,9 @@ function createDesktop({ getWindow, showWindow, navigate, onChange }) {
   function refresh() {
     if (!tray) return;
     const status = usage ? `${usage.label}: ${Math.round(usage.percent)}% used` : null;
-    tray.setToolTip(status ? `VibeDeck — ${status}` : "VibeDeck");
+    tray.setToolTip(status ? `ReVibe — ${status}` : "ReVibe");
     tray.setContextMenu(Menu.buildFromTemplate([
-      { label: "Show VibeDeck", click: () => showWindow() },
+      { label: "Show ReVibe", click: () => showWindow() },
       ...(status ? [{ label: status, enabled: false }] : []),
       { type: "separator" },
       { label: "New session", click: () => navigate("/") },
@@ -56,7 +56,7 @@ function createDesktop({ getWindow, showWindow, navigate, onChange }) {
       { label: "Keep running when closed", type: "checkbox", checked: settings.closeToTray,
         click: item => { void update({ closeToTray: item.checked }).catch(() => refresh()); } },
       { type: "separator" },
-      { label: "Quit VibeDeck", click: () => app.quit() },
+      { label: "Quit ReVibe", click: () => app.quit() },
     ]));
   }
 
@@ -64,7 +64,7 @@ function createDesktop({ getWindow, showWindow, navigate, onChange }) {
     if (tray) return;
     try {
       // The bare mark reads better than the app tile at tray size.
-      const icon = nativeImage.createFromPath(path.join(__dirname, "vibedeck-tray.png"));
+      const icon = nativeImage.createFromPath(path.join(__dirname, "revibe-tray.png"));
       tray = new Tray(icon.isEmpty() ? icon : icon.resize({ width: process.platform === "darwin" ? 16 : 22, quality: "best" }));
     } catch {
       tray = null; // No system tray available; closing then behaves normally.

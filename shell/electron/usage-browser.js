@@ -1,5 +1,5 @@
 // Google sign-in uses normal Chrome; the background reader only reads usage.
-// This private profile belongs to VibeDeck. Only Mistral cookies may enter the isolated desktop workspace.
+// This private profile belongs to ReVibe. Only Mistral cookies may enter the isolated desktop workspace.
 const { app } = require('electron');
 const fs = require('node:fs/promises');
 const path = require('node:path');
@@ -89,7 +89,7 @@ async function executable() {
     try { await fs.access(candidate); return candidate; } catch { /* Try the next installed browser. */ }
   }
   throw new Error('Install a Chromium-based browser (Chrome, Chromium, Brave, Helium, Vivaldi or Edge) to connect Mistral usage. '
-    + 'Firefox and Zen do not support the DevTools protocol VibeDeck uses. Set VIBEDECK_BROWSER to point at a custom browser.');
+    + 'Firefox and Zen do not support the DevTools protocol ReVibe uses. Set VIBEDECK_BROWSER to point at a custom browser.');
 }
 async function stopBrowsers() {
   if (starting) await starting.catch(() => {});

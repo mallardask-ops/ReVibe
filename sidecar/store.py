@@ -1,6 +1,6 @@
-"""VibeDeck local persistence (SQLite).
+"""ReVibe local persistence (SQLite).
 
-VibeDeck's own metadata lives here: session registry (id, cwd, agent, model,
+ReVibe's own metadata lives here: session registry (id, cwd, agent, model,
 reasoning, status), default config, per-session cost tracking, and an audit log.
 The conversation history itself stays in Vibe's own session store (served via the
 app-server); this DB is the UI/control-plane layer.
@@ -83,7 +83,7 @@ class Store:
         con.close()
 
     def _migrate(self, con: sqlite3.Connection) -> None:
-        """Add any columns missing from an older VibeDeck DB (forward-compatible)."""
+        """Add any columns missing from an older ReVibe DB (forward-compatible)."""
         existing = {r["name"] for r in con.execute("PRAGMA table_info(sessions)").fetchall()}
         # map legacy column names -> new ones
         if "agent_mode" in existing and "agent" not in existing:

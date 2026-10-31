@@ -28,7 +28,7 @@ def test_launcher_preserves_cli_auth_and_reads_port_after_env(tmp_path, inherite
     env.pop("MISTRAL_API_KEY", None)
     if inherited_key:
         env["MISTRAL_API_KEY"] = inherited_key
-    launcher = Path(__file__).resolve().parents[1] / "packaging/bin/vibedeck"
+    launcher = Path(__file__).resolve().parents[1] / "packaging/bin/revibe"
     result = subprocess.run(["bash", str(launcher)], env=env, capture_output=True, text=True, timeout=5, check=True)
     assert result.stdout.splitlines() == [inherited_key or "unset", "http://127.0.0.1:19999", str(tmp_path / "data/vibedeck")]
 

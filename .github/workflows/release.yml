@@ -1,0 +1,87 @@
+name: Release
+
+# A version tag (v1.0.0) builds the Linux AppImage and the Windows installer
+# and portable exe, and publishes them as a GitHub release.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # the oldest supported runner, so the AppImage runs on older glibc too
+          - os: ubuntu-22.04
+            target: --linux AppImage
+          - os: windows-latest
+            target: --win nsis portable
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: pnpm/action-setup@v6.1.0
+        with:
+          version: 9.15.9
+          cache: false
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Build the frontend
+        working-directory: frontend
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Bundle the sidecar
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install . pyinstaller
+          python packaging/build_sidecar.py
+
+      - name: Package the app
+        working-directory: shell/electron
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm ci --no-audit --no-fund
+          npx electron-builder ${{ matrix.target }} --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: revibe-${{ matrix.os }}
+          path: |
+            build/release/*.AppImage
+            build/release/*.exe
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd artifacts
+          sha256sum * > SHA256SUMS.txt
+          gh release create "$GITHUB_REF_NAME" * \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "ReVibe ${GITHUB_REF_NAME#v}" \
+            --notes-file "$GITHUB_WORKSPACE/docs/release-notes/${GITHUB_REF_NAME}.md"

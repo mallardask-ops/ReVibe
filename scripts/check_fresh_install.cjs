@@ -9,7 +9,7 @@ const {chromium} = require(process.env.VIBEDECK_PLAYWRIGHT);
   const data = process.env.VIBEDECK_DATA || path.join(process.env.HOME,'.local/share/vibedeck');
   assert(!fs.existsSync(path.join(data,'vibedeck.db')), 'Expected a fresh application profile');
   const port = Number(process.env.VIBEDECK_PORT || 18777), debug = port+1;
-  const child = spawn(path.join(process.env.HOME,'.local/bin/vibedeck'),
+  const child = spawn(path.join(process.env.HOME,'.local/bin/revibe'),
     [...(process.env.VIBEDECK_TEST_HOME ? ['--user-data-dir='+process.env.VIBEDECK_TEST_HOME] : []),'--no-sandbox','--remote-debugging-address=127.0.0.1','--remote-debugging-port='+debug],
     {env:{...process.env,VIBEDECK_PORT:String(port),DO_NOT_TRACK:'1'},stdio:'ignore'});
   let browser;
@@ -21,7 +21,7 @@ const {chromium} = require(process.env.VIBEDECK_PLAYWRIGHT);
     }
     browser = await chromium.connectOverCDP('http://127.0.0.1:'+debug);
     const page = browser.contexts()[0].pages()[0];
-    await page.getByRole('dialog',{name:'Welcome to VibeDeck'}).waitFor();
+    await page.getByRole('dialog',{name:'Welcome to ReVibe'}).waitFor();
     await page.getByRole('button',{name:'Sign in to Mistral',exact:true}).waitFor();
     await page.getByRole('button',{name:'Set up later',exact:true}).click();
     const settings = await page.evaluate(()=>fetch('/api/agents/settings').then(r=>r.json()));

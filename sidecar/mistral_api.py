@@ -1,4 +1,4 @@
-"""Direct Mistral API access for VibeDeck.
+"""Direct Mistral API access for ReVibe.
 
 Responsibilities:
   1. Manage the user's Mistral API key so the direct-chat surface and the Studio

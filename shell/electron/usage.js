@@ -43,11 +43,11 @@ async function read(year, month, refresh = false) {
 }
 async function readRemote(year, month, version) {
   if (!await browser.available()) return { status: "disconnected", source: "web", allowances: [], billing: null,
-    detail: "Connect Mistral usage with Google in a Chromium-based browser. VibeDeck keeps the connection in the background." };
+    detail: "Connect Mistral usage with Google in a Chromium-based browser. ReVibe keeps the connection in the background." };
   let expired = false, signingIn = false;
   async function get(url, asText = false, required = true) {
     const response = await browser.read(url);
-    if (!response) { signingIn = true; throw new Error("Finish signing in in the VibeDeck usage browser, then refresh."); }
+    if (!response) { signingIn = true; throw new Error("Finish signing in in the ReVibe usage browser, then refresh."); }
     if (response.type === "opaqueredirect" || response.status === 401 || (response.status >= 300 && response.status < 400)) {
       if (required) expired = true;
       throw new Error("Mistral sign-in expired. Reconnect your usage account.");

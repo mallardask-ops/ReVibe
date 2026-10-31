@@ -91,7 +91,7 @@ export function AccountMenu({ user, vibeReady }: { user: string; vibeReady: bool
     <dialog ref={dialog} onClose={() => trigger.current?.focus()} aria-labelledby="account-title" onCancel={event => { if (busy) event.preventDefault(); }} className="w-[calc(100%_-_2rem)] max-w-md rounded-xl border border-border bg-surface-raised p-6 text-text shadow-lg backdrop:bg-black/70">
       <h2 id="account-title" className="text-lg font-semibold">Mistral account</h2>
       <p role="status" className="mt-3 text-sm text-text-muted">{busy ? "Checking your connection..." : connected ? "Browser sign-in saved" : "Not signed in to Mistral."}</p>
-      <p className="mt-3 text-sm text-text-muted">Sign in with Google or email in your regular browser. Signing out clears VibeDeck’s workspace session and usage connection. Your CLI login, API keys, and saved chats stay on this device.</p>
+      <p className="mt-3 text-sm text-text-muted">Sign in with Google or email in your regular browser. Signing out clears ReVibe’s workspace session and usage connection. Your CLI login, API keys, and saved chats stay on this device.</p>
       <p className="mt-3 text-xs text-text-faint">Manage your shared CLI account with <code>vibe --setup</code>.</p>
       <p className="mt-3 text-xs text-text-faint">A saved browser sign-in is reused across launches. Mistral may ask you to authenticate again if it expires or is revoked.</p>
       {!desktop && <p className="mt-3 text-sm text-text-muted">Browser account connection requires the Electron desktop app.</p>}
@@ -99,7 +99,7 @@ export function AccountMenu({ user, vibeReady }: { user: string; vibeReady: bool
       {signingIn && <div className="mt-5"><SignInConfirmation /></div>}
       <div className="mt-5 flex flex-wrap gap-2">
         {desktop && <Button disabled={busy} onClick={() => void changeAccount(false)}>{connected ? "Switch Mistral account" : "Sign in to Mistral"}</Button>}
-        {desktop && connected && <Button variant="outline" disabled={busy} onClick={() => void changeAccount(true)}>Sign out of VibeDeck</Button>}
+        {desktop && connected && <Button variant="outline" disabled={busy} onClick={() => void changeAccount(true)}>Sign out of ReVibe</Button>}
         <Link to="/settings?section=providers" onClick={() => dialog.current?.close()} className="self-center text-sm text-primary hover:underline">Manage API keys</Link>
         <Button variant="ghost" disabled={busy} onClick={() => dialog.current?.close()}>Close</Button>
       </div>

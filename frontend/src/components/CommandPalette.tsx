@@ -175,7 +175,7 @@ export function CommandPalette({
     if (isFrameless()) {
       cmds.push({
         id: "quit", group: "Actions",
-        label: "Quit VibeDeck",
+        label: "Quit ReVibe",
         keywords: "quit exit close app window",
         icon: LogOut,
         run: () => closeWindow(),

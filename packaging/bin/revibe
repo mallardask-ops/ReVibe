@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VibeDeck launcher — ensures the local sidecar is running, then opens the app
+# ReVibe launcher — ensures the local sidecar is running, then opens the app
 # in a dedicated frameless window. Safe to run repeatedly; reuses a live sidecar.
 set -eu
 
@@ -11,7 +11,7 @@ if [ -z "$APP_HOME" ]; then
   elif [ -f "${XDG_DATA_HOME:-$HOME/.local/share}/vibedeck/sidecar/vibedeck_server.py" ]; then
     APP_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/vibedeck"
   else
-    echo "VibeDeck: cannot locate the sidecar. Set VIBEDECK_HOME to the app root." >&2
+    echo "ReVibe: cannot locate the sidecar. Set VIBEDECK_HOME to the app root." >&2
     exit 1
   fi
 fi

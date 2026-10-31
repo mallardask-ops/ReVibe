@@ -1,10 +1,10 @@
-"""Sync VibeDeck's session registry with the vibe CLI's session store.
+"""Sync ReVibe's session registry with the vibe CLI's session store.
 
 The desktop app and the vibe CLI are two front-ends over the same session
 store: both drive ``vibe-app-server``, which persists every session under
 ``~/.vibe/logs/session`` (legacy ``session_*/`` folders and the unified
 ``unified/`` journal store). This module lists that store through a dedicated
-app-server bridge and mirrors it into VibeDeck's registry, so sessions started
+app-server bridge and mirrors it into ReVibe's registry, so sessions started
 in the CLI show up in the sidebar and can be continued in the desktop app —
 and sessions started in the desktop app are equally continuable from the CLI.
 
@@ -97,7 +97,7 @@ def cleanup_store_dir(session_id: str) -> None:
 
 
 class VibeSessionSync:
-    """Lists the shared vibe session store and mirrors it into VibeDeck's DB."""
+    """Lists the shared vibe session store and mirrors it into ReVibe's DB."""
 
     def __init__(self, store, manager: SessionManager,
                  log_dir: Optional[Path] = None):
@@ -194,11 +194,11 @@ class VibeSessionSync:
             if listed_title != (row.get("title") or ""):
                 fields["title"] = listed_title
         elif not row.get("custom_title") and (eff.get("title") or "").strip():
-            # VibeDeck sessions the user has not named take Vibe's own title
+            # ReVibe sessions the user has not named take Vibe's own title
             if listed_title != (row.get("title") or ""):
                 fields["title"] = listed_title
         else:
-            # VibeDeck sessions: adopt a title only when it changed in the
+            # ReVibe sessions: adopt a title only when it changed in the
             # store since the last sync (an external rename), never clobber
             # a local one
             prev = self._last_titles.get(sid)
@@ -242,7 +242,7 @@ class VibeSessionSync:
 
     async def sync(self, live_sids: Optional[set] = None,
                    force: bool = False) -> dict[str, dict]:
-        """Mirror the shared store into VibeDeck's registry.
+        """Mirror the shared store into ReVibe's registry.
 
         ``live_sids`` are sessions with a live desktop bridge — those rows are
         owned by the turn/tap machinery and are skipped (their store entries

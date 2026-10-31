@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VibeDeck user-level install (no root). Builds the frontend, creates the sidecar
+# ReVibe user-level install (no root). Builds the frontend, creates the sidecar
 # venv, and installs the launcher, desktop entry, and icon.
 set -euo pipefail
 
@@ -40,34 +40,30 @@ for part in sidecar dist shell; do
 done
 
 echo "==> Installing launcher and desktop entry"
-install -m 0755 "$SRC/packaging/bin/vibedeck" "$BIN/vibedeck"
-sed "s|^Exec=.*|Exec=$BIN/vibedeck %U|" "$SRC/packaging/vibedeck.desktop" > "$APPS/vibedeck.desktop"
-chmod 0644 "$APPS/vibedeck.desktop"
+install -m 0755 "$SRC/packaging/bin/revibe" "$BIN/revibe"
+# the old command name keeps working
+ln -sf "$BIN/revibe" "$BIN/vibedeck"
+sed "s|^Exec=.*|Exec=$BIN/revibe %U|" "$SRC/packaging/revibe.desktop" > "$APPS/revibe.desktop"
+chmod 0644 "$APPS/revibe.desktop"
+rm -f "$APPS/vibedeck.desktop"
 command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$APPS" >/dev/null 2>&1 || true
 
 echo "==> Installing icon"
 for size in 16x16 32x32 48x48 128x128 256x256; do
   mkdir -p "$ICONS/$size/apps"
 done
-# Render each size from the SVG when rsvg-convert is available; else reuse the PNG.
-if [ -f "$SRC/packaging/vibedeck-icon.png" ]; then
-  for size in 16x16 32x32 48x48 128x128 256x256; do
-    if command -v rsvg-convert >/dev/null 2>&1 && [ -f "$SRC/packaging/vibedeck-icon.svg" ]; then
-      rsvg-convert -w "${size%x*}" -h "${size%x*}" "$SRC/packaging/vibedeck-icon.svg" -o "$ICONS/$size/apps/vibedeck.png"
-    else
-      cp "$SRC/packaging/vibedeck-icon.png" "$ICONS/$size/apps/vibedeck.png"
-    fi
-  done
-fi
-if [ -f "$SRC/packaging/vibedeck-icon.svg" ]; then
-  mkdir -p "$ICONS/scalable/apps"
-  cp "$SRC/packaging/vibedeck-icon.svg" "$ICONS/scalable/apps/vibedeck.svg"
-fi
+for size in 16x16 32x32 48x48 128x128 256x256; do
+  cp "$SRC/packaging/brand/png/$size.png" "$ICONS/$size/apps/revibe.png"
+  rm -f "$ICONS/$size/apps/vibedeck.png"
+done
+mkdir -p "$ICONS/scalable/apps"
+cp "$SRC/packaging/brand/revibe.svg" "$ICONS/scalable/apps/revibe.svg"
+rm -f "$ICONS/scalable/apps/vibedeck.svg"
 command -v gtk-update-icon-cache >/dev/null 2>&1 && gtk-update-icon-cache -f -t "$ICONS" >/dev/null 2>&1 || true
 
 if [ ! -f "$CFG/env" ]; then
   cat > "$CFG/env" <<'EOF'
-# VibeDeck environment — sourced by the launcher. 600 perms.
+# ReVibe environment — sourced by the launcher. 600 perms.
 # The sidecar also resolves the key from the system keyring (ai.mistral.vibe).
 # export MISTRAL_API_KEY=""
 EOF
@@ -80,6 +76,6 @@ Done. Next steps:
 
   1. API key (Chat + Studio): the sidecar reads it from the system keyring
      (same store the vibe CLI uses). To override, edit ${XDG_CONFIG_HOME:-~/.config}/vibedeck/env
-  2. Launch "VibeDeck" from your app drawer, or run:  vibedeck
+  2. Launch "ReVibe" from your app drawer, or run:  revibe
 
 EOF

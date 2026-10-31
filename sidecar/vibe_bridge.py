@@ -1,4 +1,4 @@
-"""VibeDeck bridge to the Mistral Vibe app-server.
+"""ReVibe bridge to the Mistral Vibe app-server.
 
 Spawns ``vibe-app-server`` (the JSON-RPC server that ships with the Vibe CLI and
 powers Vibe Code Web) as a subprocess and speaks its wire protocol over stdio.
@@ -66,9 +66,12 @@ def find_app_server() -> str:
         return env
     # uv tool install puts it here.
     home = Path.home()
+    exe = ".exe" if os.name == "nt" else ""
     candidates = [
-        home / ".local/bin/vibe-app-server",
+        home / f".local/bin/vibe-app-server{exe}",
         home / ".local/share/uv/tools/mistral-vibe/bin/vibe-app-server",
+        # uv on Windows keeps tools under %APPDATA%\uv\tools
+        Path(os.environ.get("APPDATA") or home) / "uv/tools/mistral-vibe/Scripts/vibe-app-server.exe",
     ]
     for c in candidates:
         if c.exists():
@@ -164,7 +167,7 @@ class VibeAppServer:
         # when an approval is requested.
         init = await self.call("initialize", {
             # entrypoint "desktop" turns on Vibe's background session titles
-            "clientInfo": {"name": "vibedeck", "title": "VibeDeck", "version": "1.1.0", "entrypoint": "desktop"},
+            "clientInfo": {"name": "revibe", "title": "ReVibe", "version": "1.0.0", "entrypoint": "desktop"},
             "capabilities": {"callbackKinds": ["approval", "user_input"]},
         })
         self.server_version = (init.get("serverInfo") or {}).get("version")

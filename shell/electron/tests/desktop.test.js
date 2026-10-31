@@ -49,7 +49,7 @@ test('tray menu shows usage, toggles the setting and routes the app', async () =
   await desktop.load();
   desktop.start();
   desktop.setUsage({ label: 'Vibe Code', percent: 5.4 });
-  assert.equal(tray.tooltip, 'VibeDeck — Vibe Code: 5% used');
+  assert.equal(tray.tooltip, 'ReVibe — Vibe Code: 5% used');
   const menu = menus.at(-1);
   menu.find(item => item.label === 'Usage').click();
   assert.deepEqual(routes, ['/usage']);
@@ -60,5 +60,5 @@ test('tray menu shows usage, toggles the setting and routes the app', async () =
   assert.deepEqual(writes, [{ closeToTray: true }]);
   for (const value of [{ label: 'x', percent: NaN }, { label: 1, percent: 2 }, 'x']) assert.throws(() => desktop.setUsage(value), /Invalid usage/);
   desktop.setUsage(null);
-  assert.equal(tray.tooltip, 'VibeDeck');
+  assert.equal(tray.tooltip, 'ReVibe');
 });
