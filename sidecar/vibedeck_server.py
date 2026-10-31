@@ -42,6 +42,7 @@ import providers as provider_config
 import review
 import session_rpc
 import skill_import
+import sounds
 import turn_queue
 import vibe_install
 import voice
@@ -453,7 +454,8 @@ def _start_tap(sid: str, bridge) -> None:
                     store.upsert_costs(sid, p.get("stats", {}),
                                        str(p.get("eventId", bridge.last_event_id)), row.get("model"))
                 elif msg.get("method") == "turn/completed":
-                    store.set_session_status(sid, "idle")
+                    outcome = (p.get("turn") or {}).get("status")
+                    store.set_session_status(sid, "idle", outcome if isinstance(outcome, str) else None)
                 elif msg.get("method") == "turn/started":
                     store.set_session_status(sid, "running")
         except (asyncio.CancelledError, BridgeError):
@@ -562,6 +564,7 @@ app.include_router(worktrees.router)
 app.include_router(processes.router)
 app.include_router(extensions.router)
 app.include_router(voice.router)
+app.include_router(sounds.router)
 
 
 @app.middleware("http")

@@ -16,10 +16,38 @@ import { useConversation } from "@/hooks/useConversation";
 import { sendTurn, enqueueTurn, forkSession, compactSession, runShell, interruptTurn, resolveCallback, patchSession, releaseSession, deleteSession, getReview, type ReviewState } from "@/lib/api";
 import { SessionMenu } from "./SessionMenu";
 import { useSetBackdropMood } from "@/lib/backdrop";
-import { ensureNotificationPermission, notify } from "@/lib/notifications";
+import { ensureNotificationPermission } from "@/lib/notifications";
+import { alert, excerpt } from "@/lib/alerts";
 import type { ChildSession, Session } from "@/lib/types";
 
 const PAGE = 60;
+
+/** Text of the agent's latest reply. */
+function lastReply(entries: { type: string; role?: string; text?: string; content?: { type: string; text?: string }[] }[]): string {
+  for (let i = entries.length - 1; i >= 0; i--) {
+    const e = entries[i];
+    if (e.type !== "message" || e.role !== "assistant") continue;
+    const text = e.text || (e.content || []).map(b => b.text || "").join("\n");
+    if (text.trim()) return text;
+  }
+  return "";
+}
+
+const FOLLOW_UPS = [
+  (p: string) => `What's next for ${p}?`,
+  () => "Reply, or type / for commands",
+  () => "Ask a follow-up, or start with ! to run a command",
+  (p: string) => `Anything else in ${p}?`,
+];
+
+/** The composer's hint: the project by name (the path is in the strip below), one phrasing per session. */
+function composerHint(session: Session, running: boolean, started: boolean): string {
+  const project = session.cwd.split(/[\\/]/).filter(Boolean).pop() || "this folder";
+  if (running) return "Vibe is working. Anything you send goes next in the queue";
+  if (!started) return `What should we build in ${project}?`;
+  const pick = [...session.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % FOLLOW_UPS.length;
+  return FOLLOW_UPS[pick](project);
+}
 
 export function Conversation({ session }: { session: Session }) {
   const [released, setReleased] = React.useState(false);
@@ -115,13 +143,24 @@ export function Conversation({ session }: { session: Session }) {
     }
   };
 
-  // desktop notifications: turn finished / approval needed while unfocused
+  // sound and notification when a run ends (a run the user stopped stays quiet)
   const prevTurn = React.useRef(conv.turnStatus);
   React.useEffect(() => {
     const prev = prevTurn.current;
     prevTurn.current = conv.turnStatus;
-    if (prev === "running" && conv.turnStatus === "completed" && !document.hasFocus()) {
-      notify("Vibe finished", session.title);
+    if (prev === "running" && conv.turnStatus === "completed") {
+      const outcome = conv.lastTurn?.status;
+      if (outcome === "failed") {
+        alert("failed", { title: `Run failed: ${session.title}`, body: conv.lastTurn?.error || "Open the session to see what went wrong.", sessionId: session.id });
+      } else if (outcome !== "interrupted") {
+        alert("done", { title: session.title, body: excerpt(lastReply(conv.entries)) || "Finished", sessionId: session.id });
+      }
+    }
+    // the sidebar shows the run state and orders by activity; the sidecar
+    // writes the status as it sees the same event, so ask a moment later
+    if ((prev === "running") !== (conv.turnStatus === "running")) {
+      const t = window.setTimeout(() => window.dispatchEvent(new Event("vibedeck:sessions")), 400);
+      return () => window.clearTimeout(t);
     }
   }, [conv.turnStatus, session.title]);
 
@@ -129,8 +168,12 @@ export function Conversation({ session }: { session: Session }) {
   React.useEffect(() => {
     const prev = prevCallbacks.current;
     prevCallbacks.current = conv.pendingCallbacks.length;
-    if (conv.pendingCallbacks.length > 0 && prev === 0 && !document.hasFocus()) {
-      notify("Vibe needs your approval", session.title);
+    if (conv.pendingCallbacks.length > 0 && prev === 0) {
+      const d: any = conv.pendingCallbacks[0].detail || {};
+      const action = d.effect?.display?.summary || d.effect?.toolName;
+      alert("attention", d.kind === "user_input"
+        ? { title: "Vibe has a question", body: d.request?.questions?.[0]?.question || session.title, sessionId: session.id }
+        : { title: "Approval needed", body: action ? `${action}\n${session.title}` : session.title, sessionId: session.id });
     }
   }, [conv.pendingCallbacks.length, session.title]);
 
@@ -459,7 +502,7 @@ export function Conversation({ session }: { session: Session }) {
             onCompact={running || released ? undefined : compact}
             // while the agent works, keep typing the next queued message
             disabled={(sending && !running) || released}
-            placeholder={`Message Vibe in ${session.cwd}…`}
+            placeholder={composerHint(session, running, conv.entries.length > 0)}
             model={model}
             onModelChange={changeModel}
             reasoning={reasoning}

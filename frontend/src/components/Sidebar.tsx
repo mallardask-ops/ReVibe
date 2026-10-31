@@ -2,7 +2,7 @@ import * as React from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Plus, Search, PanelLeft, Trash2, ChevronDown, X,
-  Network, Clock3, LayoutGrid, MoreHorizontal, Pencil, Cloud, CloudOff, RotateCw, ExternalLink,
+  Network, Clock3, LayoutGrid, MoreHorizontal, Pencil, Cloud, CloudOff, RotateCw, ExternalLink, Copy, EyeOff,
 } from "lucide-react";
 import { getProjects, patchSession } from "@/lib/api";
 import { SessionMenu } from "./SessionMenu";
@@ -19,6 +19,31 @@ const row = "flex h-8 w-full min-w-0 items-center gap-2.5 rounded-md px-2.5 text
 const rowIdle = "text-text hover:bg-surface-muted";
 const rowActive = "bg-surface-muted text-text";
 const sectionLabel = "flex h-8 items-center px-2.5 text-xs font-medium text-text-faint";
+
+// Per-viewer sidebar state: project names and hidden projects, and how far
+// each session has been seen. Lost storage only resets these.
+function readJson<T>(key: string, fallback: T): T {
+  try { return JSON.parse(localStorage.getItem(key) || "null") ?? fallback; } catch { return fallback; }
+}
+function writeJson(key: string, value: unknown): void {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* storage unavailable */ }
+}
+
+const SEEN_KEY = "vibedeck.seen-sessions";
+const seen: Record<string, number> = readJson(SEEN_KEY, {});
+
+/** True when the session changed (a run finished) since it was last open. */
+function useUnseen(s: Session, active: boolean): boolean {
+  const known = seen[s.id];
+  React.useEffect(() => {
+    // the open session is seen; a session met for the first time starts seen
+    if ((active || known === undefined) && seen[s.id] !== s.updated_at) {
+      seen[s.id] = s.updated_at;
+      writeJson(SEEN_KEY, seen);
+    }
+  }, [active, known, s.id, s.updated_at]);
+  return !active && known !== undefined && s.status !== "running" && s.updated_at > known + 1;
+}
 
 function startOfDay(ts: number): number {
   const d = new Date(ts * 1000);
@@ -78,13 +103,40 @@ export function Sidebar({
   });
   const menuButtonRef = React.useRef<HTMLButtonElement>(null);
 
+  // reload when a session starts in a folder the list has not seen yet
+  const folders = React.useMemo(() => [...new Set(sessions.map(s => s.cwd))].sort().join("\n"), [sessions]);
   React.useEffect(() => {
     let closed = false;
     getProjects().then(data => {
       if (!closed) setProjects([...new Map([...data.recent, ...data.known].map(p => [p.path, p])).values()]);
     }).catch(() => { if (!closed) setProjectsError(true); });
     return () => { closed = true; };
-  }, []);
+  }, [folders]);
+
+  const [projectNames, setProjectNames] = React.useState<Record<string, string>>(() => readJson("vibedeck.project-names", {}));
+  const [hiddenProjects, setHiddenProjects] = React.useState<Record<string, number>>(() => readJson("vibedeck.hidden-projects", {}));
+  const [renamingProject, setRenamingProject] = React.useState<string | null>(null);
+  const renameProject = (path: string, name: string) => {
+    const next = { ...projectNames };
+    if (name.trim()) next[path] = name.trim(); else delete next[path];
+    setProjectNames(next); writeJson("vibedeck.project-names", next);
+    setRenamingProject(null);
+  };
+  const hideProject = (path: string) => {
+    const next = { ...hiddenProjects, [path]: Date.now() / 1000 };
+    setHiddenProjects(next); writeJson("vibedeck.hidden-projects", next);
+  };
+  const lastActive = React.useMemo(() => {
+    const m = new Map<string, number>();
+    for (const s of sessions) m.set(s.cwd, Math.max(m.get(s.cwd) ?? 0, s.updated_at));
+    return m;
+  }, [sessions]);
+  // the project with the latest activity first; a hidden one returns once it is used again
+  const shownProjects = React.useMemo(() => projects
+    .filter(p => !(hiddenProjects[p.path] && (lastActive.get(p.path) ?? 0) <= hiddenProjects[p.path]))
+    .map(p => ({ ...p, name: projectNames[p.path] || p.name }))
+    .sort((a, b) => (lastActive.get(b.path) ?? 0) - (lastActive.get(a.path) ?? 0)),
+  [projects, hiddenProjects, projectNames, lastActive]);
 
   React.useEffect(() => { setMenuOpen(false); }, [location, collapsed]);
   React.useEffect(() => {
@@ -117,7 +169,7 @@ export function Sidebar({
   const cloudPath = React.useMemo(() => new Map(cloud.projects.map(p => [p.id, p.localPath])), [cloud.projects]);
   // Sessions started in a listed project nest under it, like the webapp;
   // the rest stay in the dated Sessions list.
-  const projectPaths = React.useMemo(() => new Set(projects.map(p => p.path)), [projects]);
+  const projectPaths = React.useMemo(() => new Set(shownProjects.map(p => p.path)), [shownProjects]);
   const loose = React.useMemo(() => visible.filter(s => !projectPaths.has(s.cwd)), [visible, projectPaths]);
   const groups = React.useMemo(() => groupByDay(loose), [loose]);
 
@@ -261,17 +313,40 @@ export function Sidebar({
             : <NavItem to="/extensions" icon={LayoutGrid} label="Extensions" />}
           {lane === "work" && <p className="px-2.5 pt-1 text-xs text-text-faint">Shared with your Mistral web workspace.</p>}
           <div className={cn(sectionLabel, "mt-4")}>Projects</div>
-          {projects.map(project => {
+          {shownProjects.map(project => {
             const nested = visible.filter(s => s.cwd === project.path);
             const remote = cloudSessions.filter(s => cloudPath.get(s.projectId) === project.path);
             const count = nested.length + remote.length;
             const folded = collapsedProjects.includes(project.path) && !query.trim();
+            if (renamingProject === project.path) return <div key={project.path} className={cn(row, "bg-surface-muted")}>
+              <ProjectMark name={project.name} />
+              <input autoFocus aria-label="Project name" defaultValue={project.name}
+                onBlur={e => renameProject(project.path, e.currentTarget.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter") renameProject(project.path, e.currentTarget.value);
+                  if (e.key === "Escape") setRenamingProject(null);
+                }}
+                className="w-full min-w-0 bg-transparent text-sm text-text focus:outline-none" />
+            </div>;
             return <div key={project.path}>
               <div className="group relative">
-                <NavLink to={`/?project=${encodeURIComponent(project.path)}`} className={({ isActive }) => cn(row, "pr-9", isActive && location.search.includes(encodeURIComponent(project.path)) ? rowActive : rowIdle)} title={project.path}>
+                <NavLink to={`/?project=${encodeURIComponent(project.path)}`} className={({ isActive }) => cn(row, "pr-14", isActive && location.search.includes(encodeURIComponent(project.path)) ? rowActive : rowIdle)} title={project.path}>
                   <ProjectMark name={project.name} /><span className="truncate flex-1">{project.name}</span>
                   {count > 0 && <span className="shrink-0 text-xs text-text-faint tabular-nums group-hover:opacity-0">{count}</span>}
                 </NavLink>
+                <span className={cn("absolute top-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 has-[[aria-expanded=true]]:opacity-100", count > 0 ? "right-7" : "right-1")}>
+                  <SessionMenu
+                    label={`Actions for ${project.name}`}
+                    trigger={<MoreHorizontal size={16} />}
+                    triggerClassName="grid h-6 w-6 place-items-center rounded-sm text-text-muted transition-colors hover:bg-surface-muted hover:text-text"
+                    items={[
+                      { label: "New session here", icon: Plus, onSelect: () => navigate(`/?project=${encodeURIComponent(project.path)}`) },
+                      { label: "Rename", icon: Pencil, onSelect: () => setRenamingProject(project.path) },
+                      { label: "Copy path", icon: Copy, onSelect: () => void navigator.clipboard?.writeText(project.path) },
+                      { label: "Remove from list", icon: EyeOff, onSelect: () => hideProject(project.path) },
+                    ]}
+                  />
+                </span>
                 {count > 0 && <button
                   type="button"
                   onClick={() => toggleProject(project.path)}
@@ -315,7 +390,7 @@ export function Sidebar({
             })}
           {lane === "code" && <CloudStatusNote cloud={cloud} />}
           {projectsError && <p className="px-2.5 text-xs text-text-faint">Projects could not be loaded.</p>}
-          {!projects.length && !projectsError && <p className="px-2.5 text-xs text-text-faint">Choose a folder to start a project.</p>}
+          {!shownProjects.length && !projectsError && <p className="px-2.5 text-xs text-text-faint">Choose a folder to start a project.</p>}
           <div className={cn(sectionLabel, "mt-4")}>Sessions</div>
           {groups.length === 0 && (
             <div className="px-2.5 py-1 text-xs text-text-faint">
@@ -384,6 +459,7 @@ function SessionItem({
   const navigate = useNavigate();
   const location = useLocation();
   const active = location.pathname === `/sessions/${s.id}`;
+  const unseen = useUnseen(s, active);
   const [renaming, setRenaming] = React.useState(false);
   const [title, setTitle] = React.useState(s.title);
   React.useEffect(() => { setTitle(s.title); }, [s.title]);
@@ -425,8 +501,10 @@ function SessionItem({
       )}
     >
       {nested && <TreeLine active={active} />}
-      {s.status === "running" && <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-primary animate-blink" aria-label="Running" />}
-      <span className="truncate flex-1">{s.title}</span>
+      {s.status === "running"
+        ? <span className="h-1.5 w-1.5 rounded-full shrink-0 bg-primary animate-blink" role="img" aria-label="Running" title="Running" />
+        : unseen && <OutcomeMark outcome={s.last_turn} />}
+      <span className={cn("truncate flex-1", unseen && !active && "text-text")}>{s.title}</span>
       {s.origin === "vibe" && (
         <span
           title="Session from the vibe CLI — continue it here or in the terminal"
@@ -490,6 +568,13 @@ function CloudStatusNote({ cloud }: { cloud: CloudState }) {
         </button>}
     </div>
   );
+}
+
+/** How a run that finished while the session was not open ended, until it is opened. */
+function OutcomeMark({ outcome }: { outcome?: string | null }) {
+  const [label, color] = outcome === "failed" ? ["Failed", "bg-danger"]
+    : outcome === "interrupted" ? ["Stopped", "bg-text-faint"] : ["Finished", "bg-success"];
+  return <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", color)} role="img" aria-label={label} title={label} />;
 }
 
 function NavItem({ to, icon: Icon, label, nested = false }: { to: string; icon?: React.ElementType; label: string; nested?: boolean }) {

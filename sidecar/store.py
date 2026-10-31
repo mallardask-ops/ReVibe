@@ -101,6 +101,8 @@ class Store:
             # the sidebar doesn't list the same conversation twice
             ("vibe_session_id", "TEXT"),
             ("warnings", "TEXT DEFAULT '[]'"),
+            # how the last turn ended: completed | failed | interrupted
+            ("last_turn", "TEXT"),
         ]:
             if col not in existing:
                 con.execute(f"ALTER TABLE sessions ADD COLUMN {col} {decl}")
@@ -180,10 +182,10 @@ class Store:
         con.commit()
         con.close()
 
-    def set_session_status(self, sid: str, status: str) -> None:
+    def set_session_status(self, sid: str, status: str, last_turn: Optional[str] = None) -> None:
         con = self._con()
-        con.execute("UPDATE sessions SET status=?, updated_at=? WHERE id=?",
-                    (status, time.time(), sid))
+        con.execute("UPDATE sessions SET status=?, updated_at=?, last_turn=COALESCE(?, last_turn) WHERE id=?",
+                    (status, time.time(), last_turn, sid))
         con.commit()
         con.close()
 
