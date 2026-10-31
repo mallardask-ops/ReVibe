@@ -16,10 +16,22 @@ import { useConversation } from "@/hooks/useConversation";
 import { sendTurn, enqueueTurn, forkSession, compactSession, runShell, interruptTurn, resolveCallback, patchSession, releaseSession, deleteSession, getReview, type ReviewState } from "@/lib/api";
 import { SessionMenu } from "./SessionMenu";
 import { useSetBackdropMood } from "@/lib/backdrop";
-import { ensureNotificationPermission, notify } from "@/lib/notifications";
+import { ensureNotificationPermission } from "@/lib/notifications";
+import { alert, excerpt } from "@/lib/alerts";
 import type { ChildSession, Session } from "@/lib/types";
 
 const PAGE = 60;
+
+/** Text of the agent's latest reply. */
+function lastReply(entries: { type: string; role?: string; text?: string; content?: { type: string; text?: string }[] }[]): string {
+  for (let i = entries.length - 1; i >= 0; i--) {
+    const e = entries[i];
+    if (e.type !== "message" || e.role !== "assistant") continue;
+    const text = e.text || (e.content || []).map(b => b.text || "").join("\n");
+    if (text.trim()) return text;
+  }
+  return "";
+}
 
 const FOLLOW_UPS = [
   (p: string) => `What's next for ${p}?`,
@@ -131,13 +143,18 @@ export function Conversation({ session }: { session: Session }) {
     }
   };
 
-  // desktop notifications: turn finished / approval needed while unfocused
+  // sound and notification when a run ends (a run the user stopped stays quiet)
   const prevTurn = React.useRef(conv.turnStatus);
   React.useEffect(() => {
     const prev = prevTurn.current;
     prevTurn.current = conv.turnStatus;
-    if (prev === "running" && conv.turnStatus === "completed" && !document.hasFocus()) {
-      notify("Vibe finished", session.title);
+    if (prev === "running" && conv.turnStatus === "completed") {
+      const outcome = conv.lastTurn?.status;
+      if (outcome === "failed") {
+        alert("failed", { title: `Run failed: ${session.title}`, body: conv.lastTurn?.error || "Open the session to see what went wrong.", sessionId: session.id });
+      } else if (outcome !== "interrupted") {
+        alert("done", { title: session.title, body: excerpt(lastReply(conv.entries)) || "Finished", sessionId: session.id });
+      }
     }
     // the sidebar shows the run state and orders by activity; the sidecar
     // writes the status as it sees the same event, so ask a moment later
@@ -151,8 +168,12 @@ export function Conversation({ session }: { session: Session }) {
   React.useEffect(() => {
     const prev = prevCallbacks.current;
     prevCallbacks.current = conv.pendingCallbacks.length;
-    if (conv.pendingCallbacks.length > 0 && prev === 0 && !document.hasFocus()) {
-      notify("Vibe needs your approval", session.title);
+    if (conv.pendingCallbacks.length > 0 && prev === 0) {
+      const d: any = conv.pendingCallbacks[0].detail || {};
+      const action = d.effect?.display?.summary || d.effect?.toolName;
+      alert("attention", d.kind === "user_input"
+        ? { title: "Vibe has a question", body: d.request?.questions?.[0]?.question || session.title, sessionId: session.id }
+        : { title: "Approval needed", body: action ? `${action}\n${session.title}` : session.title, sessionId: session.id });
     }
   }, [conv.pendingCallbacks.length, session.title]);
 

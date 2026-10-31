@@ -11,10 +11,11 @@ import { VibeReleaseNotes } from "@/components/VibeReleaseNotes";
 import { WorktreesCard } from "@/components/WorktreesCard";
 import { THEMES, getTheme, setTheme, type ThemeId } from "@/lib/theme";
 import { BACKDROPS, setBackdrop, useBackdrop } from "@/lib/backdrop";
+import { ALERT_EVENTS, getSoundThemes, playSound, setAlertPrefs, useAlertPrefs, type AlertPrefs, type SoundTheme } from "@/lib/alerts";
 import {
   notificationsEnabled, setNotificationsEnabled, notificationsSupported,
 } from "@/lib/notifications";
-import { Check, Plug, Boxes, SlidersHorizontal } from "lucide-react";
+import { Check, Plug, Boxes, Play, SlidersHorizontal } from "lucide-react";
 import { cn, modelLabel } from "@/lib/utils";
 import type { ApiKeyStatus } from "@/lib/types";
 import type { DesktopSettings } from "@/lib/windowControls";
@@ -247,11 +248,12 @@ export function SettingsView() {
             <div>
               <div className="text-xs font-medium text-text-muted">Desktop notifications</div>
               <p className="text-xs text-text-faint mt-0.5">
-                Turn-complete and approval alerts while the window is unfocused.
+                Shown while VibeDeck is in the background. Click one to open its session.
               </p>
             </div>
             <NotificationsToggle />
           </div>
+          <AlertSettings />
           <TrayControl />
           <div>
             <label className="block text-xs font-medium text-text-muted mb-1.5">Default lane</label>
@@ -417,6 +419,89 @@ function BackdropPicker() {
             {current === b.id && <Check size={11} className="text-primary" />}
           </button>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- sounds and notifications per event
+
+function Switch({ on, onChange, label, disabled }: { on: boolean; onChange: (on: boolean) => void; label: string; disabled?: boolean }) {
+  return (
+    <button type="button" role="switch" aria-checked={on} aria-label={label} title={label} disabled={disabled}
+      onClick={() => onChange(!on)}
+      className={cn("relative h-5 w-9 shrink-0 rounded-full transition-colors disabled:opacity-40", on ? "bg-primary" : "bg-surface-muted")}>
+      <span className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all", on ? "left-[18px]" : "left-0.5")} />
+    </button>
+  );
+}
+
+function AlertSettings() {
+  const prefs = useAlertPrefs();
+  const [themes, setThemes] = React.useState<SoundTheme[] | null>(null);
+  React.useEffect(() => { void getSoundThemes().then(setThemes); }, []);
+  const set = (patch: Partial<AlertPrefs>) => setAlertPrefs({ ...prefs, ...patch });
+  // a saved theme that is no longer installed plays the first installed one
+  const theme = prefs.theme === "off" ? "off" : themes?.some(t => t.id === prefs.theme) ? prefs.theme : themes?.[0]?.id ?? prefs.theme;
+  const soundsOn = theme !== "off" && !!themes?.length;
+  return (
+    <div className="space-y-3">
+      <div>
+        <div className="text-xs font-medium text-text-muted">Sounds</div>
+        <p className="mt-0.5 mb-1.5 text-xs text-text-faint">
+          {themes && !themes.length ? "No sound theme is installed on this computer (ocean-sound-theme or sound-theme-freedesktop)." : "From the sound themes installed on this computer."}
+        </p>
+        <div className="flex flex-wrap items-center gap-1.5" role="radiogroup" aria-label="Sound theme">
+          {[{ id: "off", name: "Off", description: "No sounds." }, ...(themes || [])].map(t => (
+            <button key={t.id} type="button" role="radio" aria-checked={theme === t.id} title={t.description}
+              onClick={() => { set({ theme: t.id }); if (t.id !== "off") void playSound("done", t.id); }}
+              className={cn("inline-flex h-8 items-center gap-1 rounded-md border px-2.5 text-xs transition-colors",
+                theme === t.id ? "border-primary text-text ring-1 ring-primary" : "border-border text-text-muted hover:border-border-strong hover:text-text")}>
+              {t.name}
+              {theme === t.id && <Check size={11} className="text-primary" />}
+            </button>
+          ))}
+          {soundsOn && (
+            <label className="ml-2 flex items-center gap-2 text-xs text-text-muted">
+              Volume
+              <input type="range" min={0} max={1} step={0.05} value={prefs.volume} aria-label="Sound volume"
+                onChange={e => set({ volume: Number(e.target.value) })}
+                onPointerUp={() => void playSound("done")} onKeyUp={() => void playSound("done")}
+                className="w-28 accent-primary" />
+            </label>
+          )}
+        </div>
+      </div>
+      <div className="overflow-hidden rounded-lg border border-border">
+        <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-3 border-b border-border px-3 py-1.5 text-[11px] text-text-faint">
+          <span>Event</span><span className="w-6" /><span className="w-9 text-center">Sound</span><span className="w-[72px] text-center">Notification</span>
+        </div>
+        {ALERT_EVENTS.map(ev => (
+          <div key={ev.id} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-3 border-b border-border px-3 py-2 last:border-b-0">
+            <div className="min-w-0">
+              <div className="text-sm text-text">{ev.label}</div>
+              <div className="truncate text-xs text-text-faint">{ev.hint}</div>
+            </div>
+            <button type="button" disabled={!soundsOn} onClick={() => void playSound(ev.id, theme)} aria-label={`Play the ${ev.label.toLowerCase()} sound`} title="Play"
+              className="grid h-6 w-6 place-items-center rounded-md text-text-muted transition-colors hover:bg-surface-muted hover:text-text disabled:opacity-30">
+              <Play size={12} fill="currentColor" />
+            </button>
+            <Switch on={prefs.sound[ev.id]} disabled={!soundsOn} label={`Sound for ${ev.label.toLowerCase()}`}
+              onChange={on => set({ sound: { ...prefs.sound, [ev.id]: on } })} />
+            <span className="flex w-[72px] justify-center">
+              <Switch on={prefs.notify[ev.id]} label={`Notification for ${ev.label.toLowerCase()}`}
+                onChange={on => set({ notify: { ...prefs.notify, [ev.id]: on } })} />
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-xs font-medium text-text-muted">Play sounds while VibeDeck is focused</div>
+          <p className="mt-0.5 text-xs text-text-faint">Off: sounds only when you are in another window.</p>
+        </div>
+        <Switch on={prefs.soundWhenFocused} disabled={!soundsOn} label="Play sounds while VibeDeck is focused"
+          onChange={on => set({ soundWhenFocused: on })} />
       </div>
     </div>
   );

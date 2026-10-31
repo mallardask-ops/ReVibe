@@ -130,6 +130,7 @@ export interface Turn {
   startedAt: number;
   completedAt?: number | null;
   stopReason?: string | null;
+  error?: { message?: string } | null;
 }
 
 export interface SessionStats {

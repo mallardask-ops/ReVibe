@@ -40,6 +40,7 @@ import processes
 import providers as provider_config
 import review
 import session_rpc
+import sounds
 import turn_queue
 import vibe_install
 import voice
@@ -561,6 +562,7 @@ app.include_router(worktrees.router)
 app.include_router(processes.router)
 app.include_router(extensions.router)
 app.include_router(voice.router)
+app.include_router(sounds.router)
 
 
 @app.middleware("http")

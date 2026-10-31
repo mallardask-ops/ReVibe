@@ -15,12 +15,14 @@ export interface ConversationState {
   lastEventId: number;
   historyBeforeCursor: string | null;
   queue: TurnQueue | null;
+  /** how the latest turn seen here ended, for alerts */
+  lastTurn: { status: string; error: string | null } | null;
 }
 
 export const initialConversation = (): ConversationState => ({
   entries: [], session: null, turnStatus: "idle", activeTurnId: null,
   stats: null, pendingCallbacks: [], childSessions: {},
-  loading: true, error: null, lastEventId: 0, historyBeforeCursor: null, queue: null,
+  loading: true, error: null, lastEventId: 0, historyBeforeCursor: null, queue: null, lastTurn: null,
 });
 
 export function conversationEvent(s: ConversationState, ev: SseEvent): ConversationState {
@@ -66,6 +68,7 @@ export function conversationEvent(s: ConversationState, ev: SseEvent): Conversat
     case "turn":
       next.turnStatus = ev.status === "started" ? "running" : "completed";
       next.activeTurnId = ev.status === "started" ? ev.turn.id : null;
+      if (ev.status === "completed") next.lastTurn = { status: ev.turn.status, error: ev.turn.error?.message ?? null };
       break;
     case "stats": next.stats = ev.stats; break;
     case "session":

@@ -6,6 +6,7 @@ import { Sidebar } from "./Sidebar";
 import { TitleBar } from "./TitleBar";
 import { CommandPalette } from "./CommandPalette";
 import { Backdrop } from "./Backdrop";
+import { alert } from "@/lib/alerts";
 import { Button, Spinner } from "./ui";
 import { useSessions, useHealth, useAppConfig, normalizeLane } from "@/hooks/useSessions";
 import type { Lane } from "@/lib/types";
@@ -70,6 +71,20 @@ export function AppShell() {
   React.useEffect(() => {
     localStorage.setItem("vibedeck.lane", lane);
   }, [lane]);
+
+  // Runs in sessions that are not open end out of sight: alert from the list.
+  // The open session alerts from its own event stream.
+  const lastStatus = React.useRef<Map<string, string> | null>(null);
+  React.useEffect(() => {
+    const prev = lastStatus.current;
+    lastStatus.current = new Map(sessions.map(s => [s.id, s.status]));
+    if (!prev) return;
+    for (const s of sessions) {
+      if (prev.get(s.id) !== "running" || s.status === "running" || location.pathname === `/sessions/${s.id}`) continue;
+      if (s.last_turn === "failed") alert("failed", { title: `Run failed: ${s.title}`, body: "Open the session to see what went wrong.", sessionId: s.id });
+      else if (s.last_turn !== "interrupted") alert("done", { title: s.title, body: `Finished in ${s.cwd.split(/[\\/]/).filter(Boolean).pop() || s.cwd}`, sessionId: s.id });
+    }
+  }, [sessions, location.pathname]);
 
   // Tray menu items (New session, Usage, Settings) route the app.
   React.useEffect(() => {
