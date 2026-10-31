@@ -162,9 +162,11 @@ export function UsageMeter({
         title={title}
         aria-label="Usage limits"
         aria-expanded={open}
-        className="h-8 w-8 shrink-0 grid place-items-center rounded-md hover:bg-surface-muted transition-colors duration-75 ease-out"
+        className="flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-md px-1.5 hover:bg-surface-muted transition-colors duration-75 ease-out"
       >
         <Ring percent={ringPercent} spinning={loading && !summary} />
+        {/* the number, so a quiet ring does not read as loading */}
+        {ringPercent != null && <span className="text-xs tabular-nums text-text-muted">{Math.round(ringPercent)}%</span>}
       </button>
       {open && (
         <>

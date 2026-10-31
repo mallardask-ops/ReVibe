@@ -9,7 +9,7 @@ const code = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/lib
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 new Function("require", "exports", code)(require, steps);
-const { groupSteps, summarizeSteps, durationSeconds } = steps;
+const { groupSteps, summarizeSteps, durationSeconds, editChanges } = steps;
 
 const tool = (id, toolName, input = {}, status = 'completed') => ({ id, type: 'effect', detail: { toolName, input }, state: { status } });
 const msg = id => ({ id, type: 'message', role: 'assistant' });
@@ -42,4 +42,17 @@ test('durations accept second and millisecond timestamps', () => {
   assert.equal(durationSeconds({ createdAt: 100, updatedAt: 106 }), 6);
   assert.equal(durationSeconds({ createdAt: 1_700_000_000_000, updatedAt: 1_700_000_008_400 }), 8);
   assert.equal(durationSeconds({ createdAt: 10, updatedAt: 5 }), null);
+});
+
+test('file edits count only the lines that changed', () => {
+  const edit = { type: 'effect', detail: { kind: 'file_edit', input: { oldString: 'a\nb\nc\nd', newString: 'a\nB\nb2\nc\nd' } }, state: { status: 'completed' } };
+  const c = editChanges(edit);
+  assert.equal(c.added, 2);
+  assert.equal(c.removed, 1);
+  assert.deepEqual(c.hunks[0], { removed: ['b'], added: ['B', 'b2'], context: 1 });
+  const batch = { type: 'effect', detail: { kind: 'file_edit', input: { changes: [{ oldString: 'x', newString: 'y' }, { oldString: 'p', newString: '' }] } } };
+  assert.deepEqual([editChanges(batch).added, editChanges(batch).removed], [1, 2]);
+  const write = { type: 'effect', detail: { kind: 'file_write', input: { content: 'one\ntwo' } }, state: { output: { previousContent: '' } } };
+  assert.deepEqual([editChanges(write).added, editChanges(write).removed], [2, 0]);
+  assert.equal(editChanges({ type: 'effect', detail: { kind: 'shell' } }), null);
 });

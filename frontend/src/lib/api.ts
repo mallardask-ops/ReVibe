@@ -482,3 +482,8 @@ export const parseCloudResult = (raw: CloudRaw) =>
   http<CloudResult<{ ok: true }>>("/api/cloud/result", { method: "POST", body: JSON.stringify(raw) });
 export const parseCloudMessages = (sessionId: string, raw: CloudRaw) =>
   http<CloudResult<{ entries: HistoryEntry[]; nextCursor: string | null }>>("/api/cloud/messages", { method: "POST", body: JSON.stringify({ ...raw, sessionId }) });
+
+// ---------------------------------------------------------------- organising sessions
+
+export const pinSession = (sid: string, pinned: boolean) => post<Session>(`/api/sessions/${encodeURIComponent(sid)}/pin`, { pinned });
+export const moveSession = (sid: string, cwd: string) => post<Session>(`/api/sessions/${encodeURIComponent(sid)}/move`, { cwd });

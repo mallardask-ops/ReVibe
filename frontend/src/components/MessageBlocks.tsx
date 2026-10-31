@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { interruptShell } from "@/lib/api";
 import { usePresence } from "./ui";
 import type { HistoryEntry } from "@/lib/types";
-import { durationSeconds, isManualShell, stepStatus, summarizeSteps } from "@/lib/steps";
+import { durationSeconds, editChanges, isManualShell, stepStatus, summarizeSteps, type EditHunk } from "@/lib/steps";
 
 // ---------------------------------------------------------------- helpers
 
@@ -146,7 +146,7 @@ export function MessageEntry({ e, reveal = true }: { e: HistoryEntry; reveal?: b
   const text = entryText(e);
   if (isUser) {
     return (
-      <div className={cn("group/message flex flex-col items-end px-6 pt-3 pb-0", reveal && "vd-reveal")}>
+      <div data-user-message={e.id} className={cn("group/message flex flex-col items-end px-6 pt-3 pb-0", reveal && "vd-reveal")}>
         <div className="flex w-fit max-w-[85%] min-w-0 flex-col rounded-3xl bg-surface-muted/70 px-5 py-3">
           <span className="sr-only">You:</span>
           {images}
@@ -240,12 +240,17 @@ export const StepGroup = React.memo(function StepGroup({ entries }: { entries: H
   const statuses = entries.map(stepStatus);
   const running = statuses.includes("running");
   const failed = statuses.filter(s => s === "failed").length;
+  const edits = entries.map(editChanges).filter(Boolean) as NonNullable<ReturnType<typeof editChanges>>[];
+  const added = edits.reduce((n, c) => n + c.added, 0), removed = edits.reduce((n, c) => n + c.removed, 0);
   return (
     <div className="py-1.5">
       <div className="px-6">
         <DisclosureRow open={open} onToggle={() => setOpen(v => !v)} controls={contentId}
           icon={Wrench} label={summarizeSteps(entries)} busy={running}
-          trailing={failed ? <span className="shrink-0 text-xs text-danger">{failed} failed</span> : undefined} />
+          trailing={<>
+            {edits.length > 0 && <LineCounts added={added} removed={removed} />}
+            {failed > 0 && <span className="shrink-0 text-xs text-danger">{failed} failed</span>}
+          </>} />
       </div>
       <div className="vd-collapse" data-open={open}>
         <div id={contentId}>{body.mounted && <>
@@ -271,32 +276,64 @@ export function ToolCallBlock({ e }: { e: HistoryEntry }) {
   const input = toolInput(e);
   const running = status === "running" || status === "in_progress";
   const failed = status === "failed" || status === "error";
+  const changes = editChanges(e);
   return (
     <div className="px-6 py-1.5">
       <DisclosureRow open={open} onToggle={() => setOpen((v) => !v)} controls={contentId}
         icon={Icon} label={name} detail={toolSummary(e)} busy={running}
-        trailing={<StatusMark status={status} />} />
+        trailing={<>{changes && !failed && <LineCounts added={changes.added} removed={changes.removed} />}<StatusMark status={status} /></>} />
       <div className="vd-collapse" data-open={open}>
         <div id={contentId}>{body.mounted && <>
           <div className={cn("mt-2 ml-6 space-y-2", failed && "text-danger")}>
-            {input && (
+            {changes && !failed ? <InlineDiff hunks={changes.hunks} /> : input && (
               <div>
                 <div className="text-xs font-medium text-text-faint mb-1">Input</div>
                 <pre className="font-mono text-xs bg-code border border-border rounded-lg p-3 overflow-x-auto text-text-muted">{input}</pre>
               </div>
             )}
-            {output && (
+            {output && !(changes && !failed) && (
               <div>
                 <div className="text-xs font-medium text-text-faint mb-1">Output</div>
                 <pre className="font-mono text-xs bg-code border border-border rounded-lg p-3 overflow-x-auto max-h-60 text-text-muted whitespace-pre-wrap">{output}</pre>
               </div>
             )}
-            {!input && !output && (
+            {!input && !output && !changes && (
               <div className="text-xs text-text-faint">No details.</div>
             )}
           </div>
         </>}</div>
       </div>
+    </div>
+  );
+}
+
+/** Lines a file edit added and removed, like a diff stat. */
+function LineCounts({ added, removed }: { added: number; removed: number }) {
+  if (!added && !removed) return null;
+  return (
+    <span className="shrink-0 font-mono text-xs font-normal tabular-nums">
+      {added > 0 && <span className="text-success">+{added}</span>}
+      {added > 0 && removed > 0 && " "}
+      {removed > 0 && <span className="text-danger">−{removed}</span>}
+    </span>
+  );
+}
+
+/** The changed lines of an edit, removed above added, with the line they start at. */
+function InlineDiff({ hunks }: { hunks: EditHunk[] }) {
+  const shown = hunks.filter(h => h.added.length || h.removed.length);
+  if (!shown.length) return <div className="text-xs text-text-faint">No line changes.</div>;
+  return (
+    <div className="overflow-hidden rounded-lg border border-border bg-code font-mono text-xs leading-5">
+      {shown.map((h, i) => (
+        <div key={i} className={cn(i > 0 && "border-t border-border")}>
+          {h.context > 0 && <div className="px-3 py-0.5 text-[11px] text-text-faint">after {h.context} unchanged line{h.context === 1 ? "" : "s"}</div>}
+          <div className="max-h-72 overflow-auto">
+            {h.removed.map((line, k) => <div key={`r${k}`} className="whitespace-pre bg-danger/10 px-3 text-text-muted"><span className="select-none text-danger">− </span>{line}</div>)}
+            {h.added.map((line, k) => <div key={`a${k}`} className="whitespace-pre bg-success/10 px-3 text-text"><span className="select-none text-success">+ </span>{line}</div>)}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

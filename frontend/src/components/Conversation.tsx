@@ -22,6 +22,74 @@ import type { ChildSession, Session } from "@/lib/types";
 
 const PAGE = 60;
 
+/**
+ * Ticks on the right edge for each of the user's messages, so a long
+ * conversation can be skimmed; Alt+↑ and Alt+↓ jump between them.
+ */
+function MessageRail({ scrollRef, entries }: { scrollRef: React.RefObject<HTMLDivElement>; entries: unknown[] }) {
+  const [marks, setMarks] = React.useState<{ id: string; at: number; label: string }[]>([]);
+  const measure = React.useCallback(() => {
+    const box = scrollRef.current;
+    if (!box || box.scrollHeight < box.clientHeight * 1.5) { setMarks([]); return; }
+    const top = box.getBoundingClientRect().top;
+    setMarks([...box.querySelectorAll<HTMLElement>("[data-user-message]")].map(el => ({
+      id: el.dataset.userMessage || "",
+      at: (el.getBoundingClientRect().top - top + box.scrollTop) / box.scrollHeight,
+      label: (el.textContent || "").replace(/^You:/, "").trim().slice(0, 80),
+    })));
+  }, [scrollRef]);
+  React.useEffect(() => {
+    const box = scrollRef.current;
+    if (!box) return;
+    const t = window.setTimeout(measure, 50);
+    const observer = new ResizeObserver(measure);
+    observer.observe(box);
+    if (box.firstElementChild) observer.observe(box.firstElementChild);
+    return () => { window.clearTimeout(t); observer.disconnect(); };
+  }, [measure, entries, scrollRef]);
+  const jump = React.useCallback((id: string) => {
+    const box = scrollRef.current;
+    const el = box?.querySelector<HTMLElement>(`[data-user-message="${CSS.escape(id)}"]`);
+    if (!box || !el) return;
+    box.scrollTo({ top: el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 16, behavior: "smooth" });
+  }, [scrollRef]);
+  React.useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (!event.altKey || (event.key !== "ArrowUp" && event.key !== "ArrowDown")) return;
+      const box = scrollRef.current;
+      if (!box) return;
+      const els = [...box.querySelectorAll<HTMLElement>("[data-user-message]")];
+      const top = box.getBoundingClientRect().top;
+      const offsets = els.map(el => el.getBoundingClientRect().top - top);
+      // the message above the current view, or the next one below it
+      const above = offsets.filter(o => o < -20).length - 1;
+      const target = event.key === "ArrowUp" ? els[above] : els[offsets.findIndex(o => o > 20)];
+      if (!target) return;
+      event.preventDefault();
+      jump(target.dataset.userMessage || "");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [jump, scrollRef]);
+  if (marks.length < 2) return null;
+  return (
+    <div aria-label="Your messages" className="pointer-events-none absolute inset-y-2 right-0.5 z-10 w-3">
+      {marks.map(m => (
+        <button key={m.id} type="button" title={m.label} aria-label={`Go to: ${m.label}`} onClick={() => jump(m.id)}
+          style={{ top: `${m.at * 100}%` }}
+          className="pointer-events-auto absolute right-0 h-1 w-2.5 -translate-y-1/2 rounded-full bg-text-faint/50 transition-colors hover:bg-primary" />
+      ))}
+    </div>
+  );
+}
+
+function formatDuration(seconds: number): string {
+  const s = Math.round(seconds);
+  if (s < 60) return `${s} s`;
+  if (s < 3600) return `${Math.floor(s / 60)} min${s % 60 ? ` ${s % 60} s` : ""}`;
+  return `${Math.floor(s / 3600)} h${Math.floor((s % 3600) / 60) ? ` ${Math.floor((s % 3600) / 60)} min` : ""}`;
+}
+
 /** Text of the agent's latest reply. */
 function lastReply(entries: { type: string; role?: string; text?: string; content?: { type: string; text?: string }[] }[]): string {
   for (let i = entries.length - 1; i >= 0; i--) {
@@ -183,6 +251,15 @@ export function Conversation({ session }: { session: Session }) {
       await interruptTurn(session.id, conv.activeTurnId);
     } catch (e) { setSendError(`Could not stop turn: ${e}`); }
   };
+  const stopRef = React.useRef(stop);
+  stopRef.current = stop;
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === ".") { e.preventDefault(); void stopRef.current(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const onResolve = React.useCallback(async (callbackId: string, decision: string, userInput?: unknown) => {
     try {
@@ -282,6 +359,18 @@ export function Conversation({ session }: { session: Session }) {
     requestAnimationFrame(() => document.querySelector<HTMLTextAreaElement>("[data-vd-composer]")?.focus());
   };
   const steps = React.useMemo(() => groupSteps(conv.entries), [conv.entries]);
+  // each finished turn ends with a quiet line: how long it worked
+  const turnEnds = React.useMemo(() => {
+    const turns = new Map<string, { start: number; end: number; last: string }>();
+    for (const e of conv.entries) {
+      if (!e.turnId) continue;
+      const t = turns.get(e.turnId);
+      turns.set(e.turnId, { start: Math.min(t?.start ?? e.createdAt, e.createdAt), end: Math.max(t?.end ?? 0, e.updatedAt || e.createdAt), last: e.id });
+    }
+    const latest = [...turns.keys()].pop();
+    return new Map([...turns].map(([turnId, t]) => [t.last, { turnId, seconds: (t.end - t.start) / 1000, latest: turnId === latest }]));
+  }, [conv.entries]);
+  const lastTurnTokens = (conv.stats?.lastTurnPromptTokens || 0) + (conv.stats?.lastTurnCompletionTokens || 0);
   // Long sessions open on their latest steps; older ones render on demand, so
   // switching sessions does not lay out hundreds of markdown blocks at once.
   const [shown, setShown] = React.useState(PAGE);
@@ -305,11 +394,7 @@ export function Conversation({ session }: { session: Session }) {
       {/* header */}
       <div className="flex h-12 items-center gap-1 pl-5 pr-3 shrink-0">
         <div className="min-w-0 flex-1 flex items-center gap-2 text-sm">
-          <span className="hidden min-w-0 shrink items-center gap-1.5 text-text-muted sm:flex" title={session.cwd}>
-            <Folder size={16} className="shrink-0" />
-            <span className="truncate">{session.cwd.split("/").filter(Boolean).pop() || session.cwd}</span>
-          </span>
-          <span className="hidden shrink-0 text-text-faint sm:inline">/</span>
+          {/* the session's name; its folder and branch are in the strip under the composer */}
           <div className="flex min-w-0 flex-1 items-center gap-0.5">
             <div className="min-w-0"><SessionTitle session={session} renameRequest={renameRequest} /></div>
             <SessionMenu
@@ -387,7 +472,9 @@ export function Conversation({ session }: { session: Session }) {
       </div>
 
       {/* messages — centered column, aligned with the composer */}
-      <div ref={scrollRef} onScroll={event => { const el = event.currentTarget; pinned.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80; setAtBottom(pinned.current); }} className="flex-1 min-h-0 overflow-y-auto">
+      <div className="relative flex-1 min-h-0">
+      <MessageRail scrollRef={scrollRef} entries={conv.entries} />
+      <div ref={scrollRef} onScroll={event => { const el = event.currentTarget; pinned.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80; setAtBottom(pinned.current); }} className="h-full overflow-y-auto">
         <div className="mx-auto max-w-3xl min-h-full flex flex-col gap-1 pt-4 pb-6">
           {hidden > 0
             ? <button onClick={showEarlier} className="mx-auto my-3 rounded-md px-2.5 py-1 text-sm text-text-muted transition-colors hover:bg-surface-muted hover:text-text">Show {Math.min(hidden, PAGE)} earlier steps</button>
@@ -402,9 +489,20 @@ export function Conversation({ session }: { session: Session }) {
               No messages yet. Send a prompt below to start the agent.
             </div>
           )}
-          {visibleSteps.map((item) => item.kind === "group"
-            ? <StepGroup key={item.entries[0].id} entries={item.entries} />
-            : <EntryBlock key={item.entry.id} e={item.entry} onResolve={onResolve} expandReasoning={session.lane === "work"} reveal={reveal(item.entry.id)} />)}
+          {visibleSteps.map((item) => {
+            const lastId = item.kind === "group" ? item.entries[item.entries.length - 1].id : item.entry.id;
+            const end = turnEnds.get(lastId);
+            return <React.Fragment key={item.kind === "group" ? item.entries[0].id : item.entry.id}>
+              {item.kind === "group"
+                ? <StepGroup entries={item.entries} />
+                : <EntryBlock e={item.entry} onResolve={onResolve} expandReasoning={session.lane === "work"} reveal={reveal(item.entry.id)} />}
+              {end && end.turnId !== conv.activeTurnId && end.seconds >= 1 && (
+                <div className="px-6 pt-1 pb-2 text-[11px] text-text-faint">
+                  Worked {formatDuration(end.seconds)}{end.latest && lastTurnTokens > 0 ? ` · ${formatTokens(lastTurnTokens)} tokens` : ""}
+                </div>
+              )}
+            </React.Fragment>;
+          })}
           {running && (
             <div className="px-6 py-2 flex items-center gap-2 text-sm font-medium text-text-muted">
               <span className="vd-dots text-primary"><span /><span /><span /></span>
@@ -412,6 +510,7 @@ export function Conversation({ session }: { session: Session }) {
             </div>
           )}
         </div>
+      </div>
       </div>
 
       {/* subagent activity: running ones as chips, finished ones folded into one */}

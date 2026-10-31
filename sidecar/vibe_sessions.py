@@ -193,6 +193,10 @@ class VibeSessionSync:
             # CLI sessions: the store is the source of truth
             if listed_title != (row.get("title") or ""):
                 fields["title"] = listed_title
+        elif not row.get("custom_title") and (eff.get("title") or "").strip():
+            # VibeDeck sessions the user has not named take Vibe's own title
+            if listed_title != (row.get("title") or ""):
+                fields["title"] = listed_title
         else:
             # VibeDeck sessions: adopt a title only when it changed in the
             # store since the last sync (an external rename), never clobber

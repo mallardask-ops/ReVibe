@@ -2,9 +2,9 @@ import * as React from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Plus, Search, PanelLeft, Trash2, ChevronDown, X,
-  Network, Clock3, LayoutGrid, MoreHorizontal, Pencil, Cloud, CloudOff, RotateCw, ExternalLink, Copy, EyeOff,
+  Network, Clock3, LayoutGrid, MoreHorizontal, Pencil, Cloud, CloudOff, RotateCw, ExternalLink, Copy, EyeOff, Pin, PinOff,
 } from "lucide-react";
-import { getProjects, patchSession } from "@/lib/api";
+import { getProjects, moveSession, patchSession, pinSession } from "@/lib/api";
 import { SessionMenu } from "./SessionMenu";
 import { cn, modelLabel } from "@/lib/utils";
 import { LANES, type useSessions, type useHealth } from "@/hooks/useSessions";
@@ -170,7 +170,23 @@ export function Sidebar({
   // Sessions started in a listed project nest under it, like the webapp;
   // the rest stay in the dated Sessions list.
   const projectPaths = React.useMemo(() => new Set(shownProjects.map(p => p.path)), [shownProjects]);
-  const loose = React.useMemo(() => visible.filter(s => !projectPaths.has(s.cwd)), [visible, projectPaths]);
+  // pinned sessions sit on their own shelf above the projects
+  const pinned = React.useMemo(() => visible.filter(s => s.pinned_at).sort((a, b) => (b.pinned_at || 0) - (a.pinned_at || 0)), [visible]);
+  const unpinned = React.useMemo(() => visible.filter(s => !s.pinned_at), [visible]);
+  const loose = React.useMemo(() => unpinned.filter(s => !projectPaths.has(s.cwd)), [unpinned, projectPaths]);
+  // drop a session on a project to move it there
+  const [dropTarget, setDropTarget] = React.useState<string | null>(null);
+  const [moveError, setMoveError] = React.useState<string | null>(null);
+  const dropOn = async (event: React.DragEvent, project: { path: string; name: string }) => {
+    setDropTarget(null);
+    const sid = event.dataTransfer.getData(DRAG_TYPE);
+    const s = sessions.find(x => x.id === sid);
+    if (!s || s.cwd === project.path) return;
+    if (!window.confirm(`Move “${s.title}” to ${project.name}? Vibe works in ${project.path} from the next message.`)) return;
+    setMoveError(null);
+    try { await moveSession(sid, project.path); window.dispatchEvent(new Event("vibedeck:sessions")); }
+    catch (e) { setMoveError(e instanceof Error ? e.message : String(e)); }
+  };
   const groups = React.useMemo(() => groupByDay(loose), [loose]);
 
   // The welcome screen creates the session with the first message, so an
@@ -312,9 +328,14 @@ export function Sidebar({
             ? <WorkspaceItem section="scheduled" icon={Clock3} label="Scheduled" />
             : <NavItem to="/extensions" icon={LayoutGrid} label="Extensions" />}
           {lane === "work" && <p className="px-2.5 pt-1 text-xs text-text-faint">Shared with your Mistral web workspace.</p>}
+          {pinned.length > 0 && <>
+            <div className={cn(sectionLabel, "mt-4")}>Pinned</div>
+            {pinned.map(s => <SessionItem key={s.id} s={s} remove={remove} />)}
+          </>}
           <div className={cn(sectionLabel, "mt-4")}>Projects</div>
+          {moveError && <p role="alert" className="px-2.5 pb-1 text-xs text-danger">{moveError}</p>}
           {shownProjects.map(project => {
-            const nested = visible.filter(s => s.cwd === project.path);
+            const nested = unpinned.filter(s => s.cwd === project.path);
             const remote = cloudSessions.filter(s => cloudPath.get(s.projectId) === project.path);
             const count = nested.length + remote.length;
             const folded = collapsedProjects.includes(project.path) && !query.trim();
@@ -329,7 +350,10 @@ export function Sidebar({
                 className="w-full min-w-0 bg-transparent text-sm text-text focus:outline-none" />
             </div>;
             return <div key={project.path}>
-              <div className="group relative">
+              <div className={cn("group relative rounded-md", dropTarget === project.path && "ring-1 ring-primary bg-primary/5")}
+                onDragOver={e => { if (e.dataTransfer.types.includes(DRAG_TYPE)) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDropTarget(project.path); } }}
+                onDragLeave={() => setDropTarget(t => (t === project.path ? null : t))}
+                onDrop={e => { e.preventDefault(); void dropOn(e, project); }}>
                 <NavLink to={`/?project=${encodeURIComponent(project.path)}`} className={({ isActive }) => cn(row, "pr-14", isActive && location.search.includes(encodeURIComponent(project.path)) ? rowActive : rowIdle)} title={project.path}>
                   <ProjectMark name={project.name} /><span className="truncate flex-1">{project.name}</span>
                   {count > 0 && <span className="shrink-0 text-xs text-text-faint tabular-nums group-hover:opacity-0">{count}</span>}
@@ -411,7 +435,7 @@ export function Sidebar({
 
         {/* user profile + status — pinned footer, never cut off */}
         <div className="px-3.5 pt-1 pb-2.5 shrink-0">
-          <AccountMenu user={user} />
+          <AccountMenu user={user} vibeReady={!!health?.api_key} />
           <div className="mt-1 px-3 flex items-center gap-2 text-[11px] text-text-faint">
             <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", health?.ok ? "bg-success" : "bg-danger")} />
             <span className="truncate">{health?.ok ? "Sidecar connected" : "Sidecar offline"}</span>
@@ -448,6 +472,8 @@ function TreeLine({ active }: { active: boolean }) {
     </span>
   );
 }
+
+const DRAG_TYPE = "application/x-vibedeck-session";
 
 function SessionItem({
   s, remove, nested = false,
@@ -494,6 +520,8 @@ function SessionItem({
   return (
     <NavLink
       to={`/sessions/${s.id}`}
+      draggable={s.status !== "running"}
+      onDragStart={e => { e.dataTransfer.setData(DRAG_TYPE, s.id); e.dataTransfer.effectAllowed = "move"; }}
       className={({ isActive }) => cn(
         row, "group relative pr-1",
         nested && "pl-[38px]",
@@ -520,6 +548,9 @@ function SessionItem({
           triggerClassName="grid h-6 w-6 place-items-center rounded-sm text-text-faint transition-colors hover:bg-surface-muted hover:text-text"
           items={[
             { label: "Rename", icon: Pencil, onSelect: () => setRenaming(true) },
+            { label: s.pinned_at ? "Unpin" : "Pin to top", icon: s.pinned_at ? PinOff : Pin, onSelect: () => {
+              pinSession(s.id, !s.pinned_at).then(() => window.dispatchEvent(new Event("vibedeck:sessions"))).catch(() => {});
+            } },
             { label: "Delete session", icon: Trash2, danger: true, onSelect: () => {
               remove(s.id).then(() => { if (active) navigate("/"); }).catch(() => {});
             } },

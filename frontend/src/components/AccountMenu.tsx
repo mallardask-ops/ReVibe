@@ -5,7 +5,12 @@ import { ChevronUp, LogIn, UserRound, BarChart3, KeyRound, Settings, FlaskConica
 import { Button } from "./ui";
 import "@/lib/windowControls";
 
-export function AccountMenu({ user }: { user: string }) {
+/**
+ * The account in the sidebar footer. Vibe works with its API key alone; the
+ * browser sign-in adds usage and the web workspace, so its absence is shown as
+ * an option, not as a problem.
+ */
+export function AccountMenu({ user, vibeReady }: { user: string; vibeReady: boolean }) {
   const root = React.useRef<HTMLDivElement>(null);
   const trigger = React.useRef<HTMLButtonElement>(null);
   const [menuOpen, setMenuOpen] = React.useState(false);
@@ -69,13 +74,18 @@ export function AccountMenu({ user }: { user: string }) {
   const connected = account?.remembered === true;
   return <div ref={root} className="relative" onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setMenuOpen(false); }}>
     <button type="button" aria-label="Account" ref={trigger} aria-haspopup="true" aria-expanded={menuOpen} aria-controls="account-popup" onClick={() => setMenuOpen(value => !value)} className="w-full flex h-12 items-center gap-3 px-3 rounded-lg text-left transition-colors duration-75 ease-out hover:bg-surface-muted active:bg-surface-muted/70">
-      <span className="h-8 w-8 rounded-full bg-surface-muted text-text-muted grid place-items-center text-xs font-medium shrink-0">{connected ? user.slice(0, 2).toLowerCase() : account ? <LogIn size={14} /> : <UserRound size={14} />}</span>
-      <span className="min-w-0 flex-1"><span className="block text-sm font-medium text-text truncate leading-tight">{connected ? user : account ? "Sign in" : "Mistral account"}</span><span className={`block text-[11px] truncate leading-tight ${connected ? "text-primary" : "text-text-faint"}`}>{connected ? "Browser sign-in saved" : "Not signed in"}</span></span>
+      <span className="h-8 w-8 rounded-full bg-surface-muted text-text-muted grid place-items-center text-xs font-medium shrink-0">{connected || vibeReady ? user.slice(0, 2).toLowerCase() : <UserRound size={14} />}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-medium text-text truncate leading-tight">{user}</span>
+        <span className={`block text-[11px] truncate leading-tight ${connected || vibeReady ? "text-text-faint" : "text-warning"}`}>
+          {connected ? "Mistral account connected" : vibeReady ? "Vibe ready · API key" : "Set up Vibe to start"}
+        </span>
+      </span>
       <ChevronUp size={16} className="text-text-faint" />
     </button>
     {menuOpen && <nav id="account-popup" aria-label="Account menu" data-side="top" className="vd-menu absolute bottom-full left-0 z-50 mb-2 w-full max-h-[calc(100vh-8rem)] overflow-y-auto rounded-xl border border-border bg-surface-raised p-1 text-sm shadow-lg">
-      <div className="px-3 py-2 text-xs text-text-muted truncate">{connected ? user : "Not signed in"}</div>
-      <button autoFocus className="w-full flex min-h-9 items-center gap-2 rounded-sm px-3 py-2 text-left hover:bg-surface-muted transition-colors" onClick={() => void open()}><UserRound size={16} />Mistral account</button>
+      <div className="px-3 py-2 text-xs text-text-muted">{connected ? "Signed in to Mistral in the browser." : "Sign in to Mistral to see subscription usage and open your web workspace."}</div>
+      <button autoFocus className="w-full flex min-h-9 items-center gap-2 rounded-sm px-3 py-2 text-left hover:bg-surface-muted transition-colors" onClick={() => void open()}>{connected ? <UserRound size={16} /> : <LogIn size={16} />}{connected ? "Mistral account" : "Sign in to Mistral"}</button>
       {[{to:"/usage",label:"Usage",icon:BarChart3},{to:"/settings?section=providers",label:"API keys",icon:KeyRound},{to:"/settings",label:"Settings",icon:Settings},{to:"/studio",label:"API playground",icon:FlaskConical},{to:"/skills",label:"Skills",icon:Puzzle},{to:"/mcp",label:"MCP",icon:Boxes},{to:"/workspace/work",label:"Mistral workspace",icon:Globe}].map(({to,label,icon:Icon}) => <Link key={to} className="flex min-h-9 items-center gap-2 rounded-sm px-3 py-2 hover:bg-surface-muted transition-colors" to={to} onClick={() => setMenuOpen(false)}><Icon size={16} />{label}</Link>)}
     </nav>}
     <dialog ref={dialog} onClose={() => trigger.current?.focus()} aria-labelledby="account-title" onCancel={event => { if (busy) event.preventDefault(); }} className="w-[calc(100%_-_2rem)] max-w-md rounded-xl border border-border bg-surface-raised p-6 text-text shadow-lg backdrop:bg-black/70">

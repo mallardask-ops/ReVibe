@@ -37,6 +37,7 @@ import cloud_teleport
 import extensions
 import git_projects
 import httpx
+import organize
 import processes
 import providers as provider_config
 import review
@@ -334,6 +335,7 @@ session_rpc.configure(lambda sid: _ensure_bridge(sid))
 vsync.config_signature = lambda: _registry_signature()
 extensions.configure(lambda cwd: VibeAppServer(cwd=cwd, stderr_log=LOG_DIR / "appserver-catalog.log"))
 worktrees.configure(lambda: vsync.host(), lambda: [r["cwd"] for r in store.list_sessions() if r.get("cwd")])
+organize.configure(store, lambda sid, state: _persist_session_state(sid, state), lambda row: _public_session(row))
 
 
 async def _open_session(sid: str) -> tuple[Any, str]:
@@ -414,6 +416,23 @@ def _persist_session_state(sid: str, state: dict) -> None:
     store.upsert_session(sid, **fields)
 
 
+TITLE_MAX = 60
+
+
+def _adopt_title(sid: str, title: object) -> None:
+    """Take an automatic title unless the user named the session."""
+    if not isinstance(title, str) or not title.strip():
+        return
+    row = store.get_session(sid)
+    if row and not row.get("custom_title") and row.get("title") != title.strip():
+        store.upsert_session(sid, title=title.strip(), updated_at=row.get("updated_at"))
+
+
+def _first_line_title(text: str) -> str:
+    line = next((part.strip() for part in text.splitlines() if part.strip()), "")
+    return line if len(line) <= TITLE_MAX else line[:TITLE_MAX - 1].rstrip() + "…"
+
+
 def _worktree_path(session: dict) -> Optional[str]:
     """The worktree a session works in, once Vibe has created it."""
     worktree = session.get("worktree")
@@ -458,6 +477,10 @@ def _start_tap(sid: str, bridge) -> None:
                     store.set_session_status(sid, "idle", outcome if isinstance(outcome, str) else None)
                 elif msg.get("method") == "turn/started":
                     store.set_session_status(sid, "running")
+                elif msg.get("method") == "session/updated":
+                    for op in p.get("patch") or []:
+                        if isinstance(op, dict) and op.get("path") == "/title":
+                            _adopt_title(sid, op.get("value"))
         except (asyncio.CancelledError, BridgeError):
             pass
         finally:
@@ -565,6 +588,7 @@ app.include_router(processes.router)
 app.include_router(extensions.router)
 app.include_router(voice.router)
 app.include_router(sounds.router)
+app.include_router(organize.router)
 
 
 @app.middleware("http")
@@ -1188,7 +1212,7 @@ async def create_session(s: SessionCreate) -> dict:
     if isinstance(agent, dict):
         agent = agent.get("name")
     title = s.title or f"Session in {Path(cwd).name}"
-    store.upsert_session(sid, title=title, cwd=cwd,
+    store.upsert_session(sid, title=title, custom_title=int(bool(s.title)), cwd=cwd,
                          agent=agent or (None if any(w.startswith("agent") for w in warnings) else s.agent),
                          model=effective.get("model") or (None if any(w.startswith("model") for w in warnings) else s.model),
                          reasoning=effective.get("reasoningEffort", s.reasoning), lane=s.lane,
@@ -1327,7 +1351,7 @@ async def _patch_session(sid: str, p: SessionPatch) -> dict:
                 await bridge.rename_session(sid, p.title)
             except BridgeError as e:
                 store.audit("session.rename.legacy", str(e.code))
-        store.upsert_session(sid, title=p.title)
+        store.upsert_session(sid, title=p.title, custom_title=1)
         store.audit("session.rename", f"{sid} -> {p.title}")
     if p.agent is not None:
         known = await _known_agent_names()
@@ -1491,6 +1515,9 @@ async def send_turn(sid: str, t: TurnReq) -> dict:
                 store.set_session_status(sid, "unknown")
             raise HTTPException(502, e.message + ". Check the conversation before retrying.") from e
         store.audit("turn.start", sid)
+        # until Vibe names it, a new session is called by its first message
+        if row and not row.get("custom_title") and (row.get("title") or "").startswith("Session in ") and t.text.strip():
+            _adopt_title(sid, _first_line_title(t.text))
         result = {"turn": res.get("turn", {}), "lastEventId": res.get("lastEventId")}
         store.set_turn_request(sid, t.request_id, payload_hash, result)
         return result

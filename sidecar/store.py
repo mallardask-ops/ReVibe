@@ -103,6 +103,10 @@ class Store:
             ("warnings", "TEXT DEFAULT '[]'"),
             # how the last turn ended: completed | failed | interrupted
             ("last_turn", "TEXT"),
+            # 1 once the user named the session; automatic titles leave it alone
+            ("custom_title", "INTEGER DEFAULT 0"),
+            # set while the session is pinned to the top of the sidebar
+            ("pinned_at", "REAL"),
         ]:
             if col not in existing:
                 con.execute(f"ALTER TABLE sessions ADD COLUMN {col} {decl}")
