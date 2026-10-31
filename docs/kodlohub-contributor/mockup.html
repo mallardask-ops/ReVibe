@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kodlohub Contributor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas: #0a0a0a;
+    --canvas-soft: #121316;
+    --canvas-card: #16181c;
+    --body: #dadbdf;
+    --mute: #7d8187;
+    --hairline: #212327;
+    --xai: #3987e5;
+    --openai: #199e70;
+    --mistral: #d95926;
+    --ok: #4ade80;
+    --warn: #f5b041;
+    --mono: "JetBrains Mono", ui-monospace, monospace;
+    /* the same iridescent sweep as /premium */
+    --premium-gradient: linear-gradient(115deg, #FFFFFF 0%, #FFFFFF 20%, #dbeafe 35%, #fbcfe8 48%, #c4b5fd 58%, #e0f2fe 68%, #FFFFFF 80%, #FFFFFF 100%);
+    --iris: linear-gradient(115deg, #7dd3fc, #c4b5fd, #f9a8d4, #fde68a, #7dd3fc);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: var(--canvas); scroll-behavior: smooth; }
+  body { background: var(--canvas); color: var(--body); font: 15px/1.6 Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px; position: relative; }
+  @media (min-width: 640px) { .wrap { padding: 0 24px; } }
+
+  /* atmosphere */
+  .atmos { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .atmos::before { content: ""; position: absolute; left: 50%; top: -260px; width: 1100px; height: 700px; transform: translateX(-50%); background: radial-gradient(closest-side, rgba(125,211,252,.10), transparent 70%), radial-gradient(closest-side at 30% 60%, rgba(196,181,253,.10), transparent 70%), radial-gradient(closest-side at 70% 60%, rgba(249,168,212,.08), transparent 70%); filter: blur(30px); }
+  .atmos::after { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.07) 1px, transparent 1px); background-size: 28px 28px; mask-image: radial-gradient(70% 50% at 50% 0%, #000 0%, transparent 80%); -webkit-mask-image: radial-gradient(70% 50% at 50% 0%, #000 0%, transparent 80%); }
+  main, nav, footer { position: relative; z-index: 1; }
+
+  .micro { font: 500 11px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
+  .pill { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--hairline); border-radius: 9999px; padding: 4px 12px; font: 500 11px/1.4 var(--mono); letter-spacing: .08em; color: rgba(255,255,255,.9); background: rgba(255,255,255,.03); white-space: nowrap; }
+  .pill.prem { border-color: rgba(255,255,255,.3); background: rgba(255,255,255,.08); box-shadow: 0 0 12px rgba(255,255,255,.15); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px rgba(74,222,128,.12), 0 0 10px rgba(74,222,128,.6); }
+  .dot.warn { background: var(--warn); box-shadow: 0 0 0 3px rgba(245,176,65,.12), 0 0 10px rgba(245,176,65,.6); }
+  .sw { width: 8px; height: 8px; border-radius: 2px; display: inline-block; flex: none; }
+  .sheen { background-image: var(--premium-gradient); background-size: 200% 200%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: sheen 8s ease-in-out infinite; filter: drop-shadow(0 0 16px rgba(255,255,255,.25)); }
+  @keyframes sheen { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+  @keyframes twinkle { 0%,100% { opacity: .2; transform: scale(.7) rotate(0deg); } 50% { opacity: 1; transform: scale(1) rotate(45deg); } }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 9999px; padding: 13px 26px; font: 700 12px var(--mono); letter-spacing: .12em; text-transform: uppercase; transition: all .2s; cursor: pointer; border: 1px solid var(--hairline); background: transparent; color: #fff; }
+  .btn:hover { border-color: rgba(255,255,255,.4); background: rgba(255,255,255,.05); }
+  .btn.solid { background: #fff; color: #0a0a0a; border-color: #fff; box-shadow: 0 0 24px rgba(255,255,255,.22); }
+  .btn.solid:hover { background: #eaeaea; box-shadow: 0 0 36px rgba(255,255,255,.32); }
+  .btn.sm { padding: 7px 14px; font-size: 11px; }
+
+  .card { background: rgba(18,19,22,.82); backdrop-filter: blur(10px); border: 1px solid var(--hairline); border-radius: 24px; transition: border-color .2s, transform .2s; }
+  .card:hover { border-color: rgba(255,255,255,.2); }
+  /* iridescent 1px frame */
+  .iris-frame { position: relative; border-color: transparent; }
+  .iris-frame::before { content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; background: var(--iris); background-size: 300% 300%; animation: sheen 6s ease-in-out infinite; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+
+  h1, h2, h3 { color: #fff; letter-spacing: -.02em; }
+  .section { padding: 88px 0 0; }
+  .section-head { margin-bottom: 24px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .section-head h2 { font-size: clamp(26px, 4vw, 34px); font-weight: 800; margin-top: 8px; text-transform: uppercase; letter-spacing: .01em; }
+
+  /* nav */
+  nav { position: sticky; top: 0; z-index: 20; background: rgba(10,10,10,.72); backdrop-filter: blur(14px); border-bottom: 1px solid var(--hairline); }
+  nav .wrap { display: flex; align-items: center; height: 60px; gap: 28px; max-width: 1200px; }
+  .logo { font-weight: 900; letter-spacing: .04em; color: #fff; font-size: 15px; }
+  .navlinks { display: none; gap: 22px; font: 500 12px var(--mono); letter-spacing: .1em; color: var(--mute); }
+  .navlinks a:hover { color: #fff; }
+  .navlinks a.on { color: transparent; }
+  @media (min-width: 960px) { .navlinks { display: flex; } }
+  .navright { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg,#2a2d33,#16181c); border: 1px solid rgba(255,255,255,.25); display: grid; place-items: center; font: 600 12px var(--mono); color: #fff; }
+
+  /* hero */
+  .hero { text-align: center; padding: 96px 0 0; }
+  .brand { position: relative; display: inline-block; user-select: none; }
+  .brand h1 { font-size: clamp(36px, 11.5vw, 150px); line-height: .9; font-weight: 900; text-transform: uppercase; letter-spacing: -.045em; -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 48%, rgba(0,0,0,.72) 78%, rgba(0,0,0,.32) 100%); mask-image: linear-gradient(180deg, #000 0%, #000 48%, rgba(0,0,0,.72) 78%, rgba(0,0,0,.32) 100%); }
+  .spark { position: absolute; animation: twinkle 3s ease-in-out infinite; pointer-events: none; }
+  .signature { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 20px; }
+  .signature i { height: 1px; width: clamp(36px, 10vw, 110px); background: linear-gradient(90deg, transparent, rgba(255,255,255,.5)); }
+  .signature i:last-child { transform: scaleX(-1); }
+  .signature span { font: 600 clamp(12px, 2.4vw, 17px) var(--mono); letter-spacing: .32em; text-transform: uppercase; }
+  .lead { max-width: 560px; margin: 26px auto 0; color: var(--mute); font-size: 16px; }
+  .ctas { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 32px; }
+
+  /* membership card */
+  .pass-stage { display: flex; justify-content: center; margin-top: 72px; perspective: 1200px; }
+  .pass { --rx: 0deg; --ry: 0deg; --mx: 50%; --my: 50%; position: relative; width: min(460px, 100%); aspect-ratio: 1.586; border-radius: 22px; padding: 1px; background: var(--iris); background-size: 300% 300%; animation: sheen 6s ease-in-out infinite; transform: rotateX(var(--rx)) rotateY(var(--ry)); transform-style: preserve-3d; transition: transform .35s cubic-bezier(.2,.8,.2,1); box-shadow: 0 30px 80px -20px rgba(196,181,253,.25), 0 20px 50px -30px rgba(0,0,0,.9); text-align: left; }
+  .pass-inner { position: relative; height: 100%; border-radius: 21px; overflow: hidden; background: radial-gradient(120% 90% at 0% 0%, #1c1f26 0%, #0e0f12 55%, #0a0a0a 100%); padding: clamp(18px, 4.5vw, 28px); display: flex; flex-direction: column; }
+  .pass-inner::before { content: ""; position: absolute; inset: 0; background: conic-gradient(from 200deg at 70% 30%, rgba(125,211,252,.0), rgba(125,211,252,.16), rgba(196,181,253,.14), rgba(249,168,212,.14), rgba(253,230,138,.10), rgba(125,211,252,.0)); mix-blend-mode: screen; opacity: .7; }
+  .pass-inner::after { content: ""; position: absolute; inset: 0; background: radial-gradient(260px circle at var(--mx) var(--my), rgba(255,255,255,.18), transparent 60%); transition: background .1s; }
+  .pass-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 22px 22px; mask-image: linear-gradient(135deg, transparent 20%, #000 70%); -webkit-mask-image: linear-gradient(135deg, transparent 20%, #000 70%); }
+  .pass > .pass-inner > * { position: relative; z-index: 1; }
+  .pass-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .pass-top .k { font-weight: 900; letter-spacing: .06em; color: #fff; font-size: 14px; }
+  .chip { width: 42px; height: 32px; border-radius: 7px; background: linear-gradient(135deg, #e7e9ee, #9aa0aa 45%, #e7e9ee 70%, #8b909a); position: relative; opacity: .9; }
+  .chip::before { content: ""; position: absolute; inset: 7px 9px; border: 1px solid rgba(0,0,0,.25); border-radius: 3px; }
+  .pass-tier { margin-top: auto; }
+  .pass-tier .t { font-size: clamp(26px, 6vw, 36px); font-weight: 900; text-transform: uppercase; letter-spacing: -.02em; line-height: 1; }
+  .pass-bottom { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 14px; gap: 10px; }
+  .pass-bottom b { display: block; font: 600 13px var(--mono); color: #fff; letter-spacing: .08em; margin-top: 3px; }
+  .pass-dots { display: flex; gap: 5px; }
+  .pass-dots i { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid rgba(10,10,10,.8); }
+  .pass-dots i + i { margin-left: -8px; }
+
+  /* stat strip under the pass */
+  .strip { display: grid; grid-template-columns: repeat(3, 1fr); max-width: 640px; margin: 40px auto 0; border: 1px solid var(--hairline); border-radius: 9999px; background: rgba(18,19,22,.6); backdrop-filter: blur(10px); }
+  .strip div { padding: 14px 10px; text-align: center; }
+  .strip div + div { border-left: 1px solid var(--hairline); }
+  .strip b { display: block; color: #fff; font: 700 clamp(15px, 3.6vw, 20px) var(--mono); font-variant-numeric: tabular-nums; }
+  .strip span { font: 500 10px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+
+  /* balance */
+  .balance { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 900px) { .balance { grid-template-columns: 1.5fr 1fr; } }
+  .bal-main { padding: clamp(22px, 4vw, 34px); overflow: hidden; }
+  .bal-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .big { font: 800 clamp(52px, 10vw, 84px)/1 Inter, sans-serif; color: #fff; letter-spacing: -.05em; margin-top: 30px; font-variant-numeric: tabular-nums; }
+  .big small { font: 500 14px var(--mono); color: var(--mute); letter-spacing: .04em; margin-left: 10px; vertical-align: middle; }
+  .track { height: 12px; border-radius: 9999px; background: var(--canvas); border: 1px solid var(--hairline); padding: 2px; margin-top: 24px; display: flex; gap: 2px; }
+  .track span { display: block; height: 100%; }
+  .track span:first-child { border-radius: 9999px 0 0 9999px; }
+  .track span:last-of-type { border-radius: 0 9999px 9999px 0; }
+  .track .glow { filter: drop-shadow(0 0 6px currentColor); }
+  .meter-legend { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 14px; font: 12px var(--mono); color: var(--mute); }
+  .meter-legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .meter-legend b { color: var(--body); font-weight: 500; }
+  .limits { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--hairline); border-top: 1px solid var(--hairline); margin: 30px calc(-1 * clamp(22px, 4vw, 34px)) calc(-1 * clamp(22px, 4vw, 34px)); }
+  .limits div { background: rgba(14,15,18,.9); padding: 16px 18px; }
+  .limits b { display: block; color: #fff; font: 600 16px var(--mono); margin-top: 3px; }
+  .bal-side { display: grid; gap: 16px; }
+  .mini { padding: 24px; }
+  .mini .v { font: 700 32px var(--mono); color: #fff; margin-top: 10px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .mini .v small { font-size: 14px; color: var(--mute); font-weight: 500; }
+  .mini .track { height: 8px; margin-top: 14px; }
+  .mini .hint { font-size: 13px; color: var(--mute); margin-top: 10px; }
+  .fav { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+  .fav code { font: 600 18px var(--mono); color: #fff; }
+
+  /* tiers */
+  .tiers { display: grid; gap: 16px; grid-template-columns: 1fr; align-items: stretch; }
+  @media (min-width: 820px) { .tiers { grid-template-columns: repeat(3, 1fr); } }
+  .tier { padding: 28px 24px; display: flex; flex-direction: column; gap: 18px; }
+  .tier.cur { background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(18,19,22,.85) 45%); box-shadow: 0 20px 60px -30px rgba(196,181,253,.35); }
+  @media (min-width: 820px) { .tier.cur { transform: translateY(-10px); } }
+  .tier h3 { font-size: 22px; font-weight: 900; text-transform: uppercase; letter-spacing: -.01em; }
+  .tier .amt { font: 700 34px var(--mono); color: #fff; letter-spacing: -.03em; }
+  .tier .amt small { font-size: 12px; color: var(--mute); font-weight: 500; letter-spacing: .04em; }
+  .tier ul { list-style: none; display: grid; gap: 10px; font-size: 14px; }
+  .tier li { display: flex; gap: 10px; align-items: flex-start; }
+  .tier li svg { flex: none; margin-top: 4px; color: #fff; }
+  .tier li.off { color: var(--mute); }
+  .tier li.off svg { color: var(--mute); }
+  .tier .foot { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--hairline); font: 12px var(--mono); color: var(--mute); }
+
+  /* providers */
+  .providers { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 760px) { .providers { grid-template-columns: repeat(3, 1fr); } }
+  .prov { padding: 24px; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+  .prov::before { content: ""; position: absolute; top: 0; left: 15%; right: 15%; height: 1px; background: linear-gradient(90deg, transparent, var(--c), transparent); }
+  .prov::after { content: ""; position: absolute; top: -80px; left: 50%; width: 220px; height: 140px; transform: translateX(-50%); background: radial-gradient(closest-side, var(--c), transparent); opacity: .12; pointer-events: none; }
+  .prov-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .prov-name { display: flex; align-items: center; gap: 12px; color: #fff; font-weight: 800; font-size: 18px; text-transform: uppercase; letter-spacing: .02em; }
+  .prov-mark { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--hairline); display: grid; place-items: center; background: var(--canvas); }
+  .prov-mark i { width: 10px; height: 10px; border-radius: 3px; background: var(--c); box-shadow: 0 0 12px var(--c); }
+  .models { margin: 20px 0; display: grid; gap: 8px; }
+  .model { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 14px; border-radius: 12px; background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.04); }
+  .model code { font: 13px var(--mono); color: #fff; }
+  .cls { font: 500 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--mute); border: 1px solid var(--hairline); border-radius: 9999px; padding: 2px 8px; }
+  .cls.frontier { color: transparent; background: var(--premium-gradient) border-box; -webkit-background-clip: text; background-clip: text; border-color: rgba(196,181,253,.35); }
+  .pool { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--hairline); }
+  .pool-row { display: flex; justify-content: space-between; font: 12px var(--mono); color: var(--mute); }
+  .pool-row b { color: var(--body); font-weight: 500; }
+  .pool .track { height: 8px; margin-top: 10px; }
+
+  /* chart */
+  .chart-card { padding: clamp(20px, 3.5vw, 30px); }
+  .chart-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+  .seg { display: inline-flex; border: 1px solid var(--hairline); border-radius: 9999px; padding: 3px; }
+  .seg button { background: none; border: 0; color: var(--mute); font: 500 11px var(--mono); letter-spacing: .08em; padding: 6px 14px; border-radius: 9999px; cursor: pointer; text-transform: uppercase; }
+  .seg button.on { background: #fff; color: #0a0a0a; }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; font: 12px var(--mono); color: var(--body); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  #chart { position: relative; }
+  #chart svg { display: block; width: 100%; height: 230px; overflow: visible; }
+  .tip { position: absolute; pointer-events: none; background: rgba(22,24,28,.95); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.14); border-radius: 12px; padding: 10px 12px; font: 12px var(--mono); color: var(--body); min-width: 170px; opacity: 0; transform: translate(-50%, -100%); transition: opacity .1s; box-shadow: 0 12px 30px rgba(0,0,0,.5); }
+  .tip.on { opacity: 1; }
+  .tip .d { color: #fff; margin-bottom: 6px; }
+  .tip .r { display: flex; justify-content: space-between; gap: 14px; }
+  .tip .r span { display: inline-flex; align-items: center; gap: 6px; }
+  .tip .t { border-top: 1px solid #2c2f35; margin-top: 6px; padding-top: 6px; color: #fff; }
+
+  /* devices + link */
+  .two { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 900px) { .two { grid-template-columns: 1fr 1fr; } }
+  .devices { padding: 6px 0; }
+  .device { display: flex; align-items: center; gap: 14px; padding: 16px 24px; border-bottom: 1px solid var(--hairline); }
+  .device:last-child { border-bottom: 0; }
+  .device .ic { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--hairline); display: grid; place-items: center; color: var(--body); flex: none; background: var(--canvas); position: relative; }
+  .device .ic .live { position: absolute; right: -2px; top: -2px; }
+  .device .meta { flex: 1; min-width: 0; }
+  .device .meta b { color: #fff; font-weight: 600; display: block; font-size: 14px; }
+  .device .meta span { font: 12px var(--mono); color: var(--mute); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+  .link-card { padding: clamp(22px, 4vw, 30px); display: flex; flex-direction: column; gap: 20px; }
+  .code { display: flex; gap: 8px; }
+  .code span { flex: 1; max-width: 58px; aspect-ratio: 4/5; border: 1px solid var(--hairline); border-radius: 14px; display: grid; place-items: center; font: 700 clamp(20px, 5vw, 28px) var(--mono); color: #fff; background: var(--canvas); }
+  .code span.cur { border-color: rgba(255,255,255,.6); box-shadow: 0 0 0 4px rgba(255,255,255,.06), 0 0 18px rgba(255,255,255,.12); }
+  .code span.cur::after { content: ""; width: 2px; height: 40%; background: #fff; margin-left: 2px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .wait { display: flex; align-items: center; gap: 10px; font: 12px var(--mono); color: var(--mute); }
+  .spin { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--hairline); border-top-color: #fff; animation: s 1s linear infinite; }
+  @keyframes s { to { transform: rotate(360deg); } }
+
+  /* steps + faq */
+  .steps { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 760px) { .steps { grid-template-columns: repeat(3, 1fr); } }
+  .step { padding: 26px 24px; }
+  .step .n { font: 800 44px/1 Inter, sans-serif; letter-spacing: -.04em; }
+  .step h3 { font-size: 16px; margin: 16px 0 6px; text-transform: uppercase; letter-spacing: .04em; }
+  .step p { font-size: 14px; color: var(--mute); }
+  .step code { font: 12px var(--mono); color: var(--body); background: rgba(255,255,255,.06); border-radius: 5px; padding: 1px 6px; }
+  .faq { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 760px) { .faq { grid-template-columns: 1fr 1fr; } }
+  .faq .card { padding: 22px 24px; border-radius: 18px; }
+  .faq b { color: #fff; font-weight: 700; display: block; margin-bottom: 6px; font-size: 14px; }
+  .faq p { font-size: 13.5px; color: var(--mute); }
+  .warnline { margin-top: 18px; text-align: center; font: 11px var(--mono); color: rgba(252,165,165,.8); }
+
+  footer { margin-top: 96px; border-top: 1px solid var(--hairline); padding: 28px 0 40px; }
+  footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; max-width: 1200px; }
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="atmos" aria-hidden="true"></div>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="#">KODLOHUB</a>
+    <div class="navlinks">
+      <a href="#">ПРОЄКТИ</a><a href="#">АРХІВ</a><a href="#">КОДЛОПЕДІЯ</a><a href="#">ТУЛЗИ</a><a href="#">KODLOBENCH</a><a href="#">ПРЕМІУМ</a><a class="on sheen" href="#">CONTRIBUTOR</a>
+    </div>
+    <div class="navright">
+      <span class="pill prem"><span class="sheen">CONTRIBUTOR+</span></span>
+      <span class="avatar">M</span>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <section class="hero">
+    <div class="brand">
+      <svg class="spark" style="top:-6px;right:-4px;color:#a5f3fc" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/></svg>
+      <svg class="spark" style="bottom:4px;left:-10px;color:#f9a8d4;animation-delay:1.5s" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/></svg>
+      <svg class="spark" style="top:40%;left:46%;color:#c4b5fd;animation-delay:.8s" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/></svg>
+      <h1 class="sheen">Contributor</h1>
+    </div>
+    <div class="signature"><i></i><span class="sheen">Kodlohub · Hub Access</span><i></i></div>
+    <p class="lead">Grok, GPT і Mistral для тих, хто будує Kodlohub. Без своїх ключів і рахунків: прив'язуєш ReVibe і кодиш у режимі Hub.</p>
+    <div class="ctas">
+      <a class="btn solid" href="#link">Підключити ReVibe</a>
+      <a class="btn" href="#tiers">Рівні доступу</a>
+    </div>
+
+    <div class="pass-stage">
+      <div class="pass" id="pass">
+        <div class="pass-inner">
+          <div class="pass-grid"></div>
+          <div class="pass-top">
+            <div><div class="k">KODLOHUB</div><div class="micro" style="margin-top:2px">Hub access pass</div></div>
+            <div class="chip" aria-hidden="true"></div>
+          </div>
+          <div class="pass-tier">
+            <div class="micro">Рівень</div>
+            <div class="t sheen">Contributor+</div>
+          </div>
+          <div class="pass-bottom">
+            <div><span class="micro">Учасник</span><b>MALLAR2D</b></div>
+            <div><span class="micro">З</span><b>03 / 26</b></div>
+            <div><span class="micro">№</span><b>0007</b></div>
+            <div class="pass-dots" aria-label="xAI, OpenAI, Mistral"><i style="background:var(--xai)"></i><i style="background:var(--openai)"></i><i style="background:var(--mistral)"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="strip">
+      <div><b>5 260</b><span>кредитів</span></div>
+      <div><b>388</b><span>на сьогодні</span></div>
+      <div><b>30 дн</b><span>до скидання</span></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div><span class="micro">Баланс</span><h2>Листопад 2026</h2></div><span class="pill">Скидання 1 гру · 00:00</span></div>
+    <div class="balance">
+      <div class="card bal-main">
+        <div class="bal-top">
+          <span class="micro">Залишок на місяць</span>
+          <span class="micro">34% витрачено</span>
+        </div>
+        <div class="big">5 260<small>/ 8 000</small></div>
+        <div class="track" role="img" aria-label="Використано 2740 з 8000 кредитів: xAI 1180, OpenAI 920, Mistral 640">
+          <span class="glow" style="width:14.75%;background:var(--xai);color:var(--xai)"></span>
+          <span class="glow" style="width:11.5%;background:var(--openai);color:var(--openai)"></span>
+          <span class="glow" style="width:8%;background:var(--mistral);color:var(--mistral)"></span>
+        </div>
+        <div class="meter-legend">
+          <span><i class="sw" style="background:var(--xai)"></i>xAI <b>1 180</b></span>
+          <span><i class="sw" style="background:var(--openai)"></i>OpenAI <b>920</b></span>
+          <span><i class="sw" style="background:var(--mistral)"></i>Mistral <b>640</b></span>
+        </div>
+        <div class="limits">
+          <div><span class="micro">Запитів/хв</span><b>20</b></div>
+          <div><span class="micro">Одночасно</span><b>2</b></div>
+          <div><span class="micro">Max out</span><b>16k</b></div>
+        </div>
+      </div>
+      <div class="bal-side">
+        <div class="card mini">
+          <span class="micro">Сьогодні</span>
+          <div class="v">612 <small>/ 1 000</small></div>
+          <div class="track"><span style="width:61.2%;background:#fff;border-radius:9999px;box-shadow:0 0 12px rgba(255,255,255,.35)"></span></div>
+          <div class="hint">Денний ліміт скинеться о 00:00 за Києвом</div>
+        </div>
+        <div class="card mini">
+          <span class="micro">Найчастіше</span>
+          <div class="fav"><span class="sw" style="background:var(--xai);width:10px;height:10px;box-shadow:0 0 10px var(--xai)"></span><code>hub/grok</code></div>
+          <div class="hint">43% витрат за місяць · 212 запитів</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="tiers">
+    <div class="section-head"><div><span class="micro">Доступ</span><h2>Рівні</h2></div></div>
+    <div class="tiers">
+      <div class="card tier">
+        <div><span class="micro">Старт</span><h3 style="margin-top:6px">Contributor</h3></div>
+        <div class="amt">3 000 <small>кредитів / міс</small></div>
+        <ul>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>400 на день · 10 запитів/хв</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>Моделі lite і standard</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>1 запит одночасно</li>
+          <li class="off"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>Frontier-моделі</li>
+        </ul>
+        <div class="foot">Видає власник</div>
+      </div>
+      <div class="card tier cur iris-frame">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div><span class="micro">Твій рівень</span><h3 style="margin-top:6px" class="sheen">Contributor+</h3></div><span class="pill prem">АКТИВНИЙ</span></div>
+        <div class="amt">8 000 <small>кредитів / міс</small></div>
+        <ul>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>1 000 на день · 20 запитів/хв</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>Lite, standard і frontier</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>2 запити одночасно</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>Відповідь до 16k токенів</li>
+        </ul>
+        <div class="foot">Діє до 31 гру 2026</div>
+      </div>
+      <div class="card tier">
+        <div><span class="micro">Ядро</span><h3 style="margin-top:6px">Core</h3></div>
+        <div class="amt">20 000 <small>кредитів / міс</small></div>
+        <ul>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>3 000 на день · 40 запитів/хв</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>Усі моделі</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>3 запити одночасно</li>
+          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>Відповідь до 32k токенів</li>
+        </ul>
+        <div class="foot">Owner і Подрофікована</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div><span class="micro">Пули</span><h2>Провайдери</h2></div></div>
+    <div class="providers">
+      <div class="card prov" style="--c:var(--xai)">
+        <div class="prov-head">
+          <div class="prov-name"><span class="prov-mark"><i></i></span>xAI</div>
+          <span class="pill"><span class="dot"></span>ONLINE</span>
+        </div>
+        <div class="models">
+          <div class="model"><code>hub/grok</code><span class="cls">standard</span></div>
+          <div class="model"><code>hub/grok-mini</code><span class="cls">lite</span></div>
+          <div class="model"><code>hub/grok-heavy</code><span class="cls frontier">frontier</span></div>
+        </div>
+        <div class="pool">
+          <div class="pool-row"><span>Пул на місяць</span><b>38%</b></div>
+          <div class="track"><span style="width:38%;background:var(--xai);border-radius:9999px;box-shadow:0 0 10px var(--xai)"></span></div>
+        </div>
+      </div>
+      <div class="card prov" style="--c:var(--openai)">
+        <div class="prov-head">
+          <div class="prov-name"><span class="prov-mark"><i></i></span>OpenAI</div>
+          <span class="pill"><span class="dot warn"></span>МАЙЖЕ ВСЕ</span>
+        </div>
+        <div class="models">
+          <div class="model"><code>hub/gpt</code><span class="cls">standard</span></div>
+          <div class="model"><code>hub/gpt-mini</code><span class="cls">lite</span></div>
+          <div class="model"><code>hub/gpt-pro</code><span class="cls frontier">frontier</span></div>
+        </div>
+        <div class="pool">
+          <div class="pool-row"><span>Пул на місяць</span><b>86%</b></div>
+          <div class="track"><span style="width:86%;background:var(--openai);border-radius:9999px;box-shadow:0 0 10px var(--openai)"></span></div>
+        </div>
+      </div>
+      <div class="card prov" style="--c:var(--mistral)">
+        <div class="prov-head">
+          <div class="prov-name"><span class="prov-mark"><i></i></span>Mistral</div>
+          <span class="pill"><span class="dot"></span>ONLINE</span>
+        </div>
+        <div class="models">
+          <div class="model"><code>hub/devstral</code><span class="cls">standard</span></div>
+          <div class="model"><code>hub/mistral-small</code><span class="cls">lite</span></div>
+          <div class="model"><code>hub/mistral-large</code><span class="cls frontier">frontier</span></div>
+        </div>
+        <div class="pool">
+          <div class="pool-row"><span>Пул на місяць</span><b>21%</b></div>
+          <div class="track"><span style="width:21%;background:var(--mistral);border-radius:9999px;box-shadow:0 0 10px var(--mistral)"></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div><span class="micro">Використання</span><h2>Останні дні</h2></div></div>
+    <div class="card chart-card">
+      <div class="chart-top">
+        <div class="legend">
+          <span><i class="sw" style="background:var(--xai)"></i>xAI</span>
+          <span><i class="sw" style="background:var(--openai)"></i>OpenAI</span>
+          <span><i class="sw" style="background:var(--mistral)"></i>Mistral</span>
+        </div>
+        <div class="seg" role="tablist"><button class="on" data-r="30">30 днів</button><button data-r="7">7 днів</button></div>
+      </div>
+      <div id="chart"><div class="tip" id="tip"></div></div>
+      <table class="vh" id="chart-table"></table>
+    </div>
+  </section>
+
+  <section class="section" id="link">
+    <div class="section-head"><div><span class="micro">ReVibe</span><h2>Пристрої</h2></div></div>
+    <div class="two">
+      <div class="card devices">
+        <div class="device">
+          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg><span class="dot live"></span></span>
+          <div class="meta"><b>ReVibe · cachyos-desktop</b><span>kc_live_7fQ2… · активний 4 хв тому</span></div>
+          <button class="btn sm">Відкликати</button>
+        </div>
+        <div class="device">
+          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg></span>
+          <div class="meta"><b>ReVibe · thinkpad</b><span>kc_live_Lm9x… · активний 3 дні тому</span></div>
+          <button class="btn sm">Відкликати</button>
+        </div>
+      </div>
+      <div class="card link-card iris-frame">
+        <div>
+          <span class="micro">Новий пристрій</span>
+          <h3 style="font-size:22px;margin-top:6px;text-transform:uppercase;font-weight:900">Код з ReVibe</h3>
+          <p style="font-size:14px;color:var(--mute);margin-top:6px">ReVibe → режим Hub → «Підключити Kodlohub». Введи шість символів, які покаже застосунок.</p>
+        </div>
+        <div class="code" aria-label="Код прив'язки">
+          <span>K</span><span>7</span><span>Q</span><span class="cur"></span><span></span><span></span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div class="wait"><span class="spin"></span>Код діє ще 2:41</div>
+          <button class="btn solid">Підтвердити</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div><span class="micro">Старт</span><h2>Три кроки</h2></div></div>
+    <div class="steps">
+      <div class="card step"><span class="n sheen">01</span><h3>Отримай статус</h3><p>Contributor видає власник тим, хто робить щось для Kodlohub: проєкти, вікі, білди, лор.</p></div>
+      <div class="card step"><span class="n sheen">02</span><h3>Прив'яжи ReVibe</h3><p>Режим Hub → «Підключити Kodlohub» → підтверди код тут. Токен <code>kc_live_</code> лишається в keyring системи.</p></div>
+      <div class="card step"><span class="n sheen">03</span><h3>Кодь у Hub</h3><p>Обирай моделі <code>hub/*</code>. Баланс видно в шапці ReVibe, сабагенти рахуються з нього ж.</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div><span class="micro">Правила</span><h2>Часті питання</h2></div></div>
+    <div class="faq">
+      <div class="card"><b>Що таке кредит?</b><p>1 кредит = $0.001 реальної вартості. Списується за фактичними токенами: lite-модель коштує копійки, frontier помітно дорожче.</p></div>
+      <div class="card"><b>Чи бачить хтось мої промпти?</b><p>Ні. Kodlohub записує тільки модель, кількість токенів і час. Текст запитів і відповідей не зберігається.</p></div>
+      <div class="card"><b>Що буде, коли пул закінчиться?</b><p>У кожного провайдера є спільний місячний бюджет. Якщо він вичерпаний, моделі цього провайдера вимикаються до 1-го числа, а решта працюють.</p></div>
+      <div class="card"><b>Можна використати токен деінде?</b><p>Ні, тільки в ReVibe. Токен прив'язаний до пристрою і відкликається в один клік.</p></div>
+    </div>
+    <p class="warnline">Передав токен іншим або підключив до сторонніх сервісів — статус знімається без повернення.</p>
+  </section>
+
+</main>
+
+<footer><div class="wrap"><span class="micro">KodloHUB · Contributor</span><span class="micro">Макет · дані умовні</span></div></footer>
+
+<script>
+(() => {
+  // holographic pass: tilt + specular follow
+  const pass = document.getElementById("pass");
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!still) {
+    pass.addEventListener("pointermove", e => {
+      const r = pass.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+      pass.style.setProperty("--ry", ((x - .5) * 16).toFixed(2) + "deg");
+      pass.style.setProperty("--rx", ((.5 - y) * 12).toFixed(2) + "deg");
+      pass.style.setProperty("--mx", (x * 100).toFixed(1) + "%");
+      pass.style.setProperty("--my", (y * 100).toFixed(1) + "%");
+    });
+    pass.addEventListener("pointerleave", () => {
+      ["--rx", "--ry"].forEach(k => pass.style.setProperty(k, "0deg"));
+      pass.style.setProperty("--mx", "50%"); pass.style.setProperty("--my", "50%");
+    });
+  }
+
+  const P = [
+    { key: "xai", name: "xAI", color: "#3987e5" },
+    { key: "openai", name: "OpenAI", color: "#199e70" },
+    { key: "mistral", name: "Mistral", color: "#d95926" },
+  ];
+  let seed = 7;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const days = [];
+  const end = new Date(2026, 10, 30);
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(end); d.setDate(end.getDate() - i);
+    const wk = d.getDay() === 0 || d.getDay() === 6 ? 1.5 : 1;
+    const active = rnd() > .12;
+    days.push({ d,
+      xai: active ? Math.round(rnd() * 70 * wk) : 0,
+      openai: active ? Math.round(rnd() * 55 * wk) : 0,
+      mistral: active ? Math.round(rnd() * 40 * wk) : 0 });
+  }
+  const fmt = d => d.toLocaleDateString("uk-UA", { day: "numeric", month: "short" });
+  const host = document.getElementById("chart");
+  const tip = document.getElementById("tip");
+  const NS = "http://www.w3.org/2000/svg";
+  const attrs = (el, o) => { for (const k in o) el.setAttribute(k, o[k]); return el; };
+
+  document.getElementById("chart-table").innerHTML =
+    "<caption>Кредити за день за провайдером</caption><tr><th>День</th>" + P.map(p => `<th>${p.name}</th>`).join("") + "</tr>" +
+    days.map(r => `<tr><td>${fmt(r.d)}</td>${P.map(p => `<td>${r[p.key]}</td>`).join("")}</tr>`).join("");
+
+  function draw(range) {
+    host.querySelector("svg")?.remove();
+    const data = days.slice(-range);
+    const W = host.clientWidth, H = 230, padL = 34, padB = 24, padT = 8;
+    const top = Math.ceil(Math.max(...data.map(r => r.xai + r.openai + r.mistral)) / 50) * 50;
+    const svg = attrs(document.createElementNS(NS, "svg"), { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `Використання кредитів за ${range} днів за провайдерами` });
+    const y = v => H - padB - (v / top) * (H - padB - padT);
+    for (let g = 0; g <= 2; g++) {
+      const v = (top / 2) * g;
+      svg.appendChild(attrs(document.createElementNS(NS, "line"), { x1: padL, x2: W, y1: y(v), y2: y(v), stroke: "#212327", "stroke-width": 1 }));
+      const lab = attrs(document.createElementNS(NS, "text"), { x: padL - 8, y: y(v) + 4, "text-anchor": "end", fill: "#7d8187", "font-size": 11, "font-family": "JetBrains Mono, monospace" });
+      lab.textContent = v; svg.appendChild(lab);
+    }
+    const slot = (W - padL) / data.length;
+    const bw = Math.max(4, Math.min(22, slot * .62));
+    const groups = [];
+    data.forEach((r, i) => {
+      const cx = padL + slot * i + slot / 2;
+      const g = document.createElementNS(NS, "g");
+      g.style.transition = "opacity .12s";
+      let acc = 0;
+      const segs = P.filter(p => r[p.key] > 0);
+      segs.forEach((p, si) => {
+        const v = r[p.key];
+        const y0 = y(acc), y1 = y(acc + v);
+        const h = Math.max(0, y0 - y1 - (si > 0 ? 2 : 0));
+        const rad = si === segs.length - 1 ? Math.min(4, h, bw / 2) : 0;
+        const x = cx - bw / 2;
+        g.appendChild(attrs(document.createElementNS(NS, "path"), {
+          d: `M${x},${y1 + h} V${y1 + rad} Q${x},${y1} ${x + rad},${y1} H${x + bw - rad} Q${x + bw},${y1} ${x + bw},${y1 + rad} V${y1 + h} Z`,
+          fill: p.color }));
+        acc += v;
+      });
+      if (i % Math.ceil(data.length / 6) === 0 || i === data.length - 1) {
+        const t = attrs(document.createElementNS(NS, "text"), { x: cx, y: H - 6, "text-anchor": "middle", fill: "#7d8187", "font-size": 11, "font-family": "JetBrains Mono, monospace" });
+        t.textContent = fmt(r.d); svg.appendChild(t);
+      }
+      const hit = attrs(document.createElementNS(NS, "rect"), { x: padL + slot * i, y: padT, width: slot, height: H - padB - padT, fill: "transparent" });
+      hit.addEventListener("mouseenter", () => {
+        groups.forEach(o => o.style.opacity = o === g ? 1 : .4);
+        const total = r.xai + r.openai + r.mistral;
+        tip.innerHTML = `<div class="d">${fmt(r.d)}</div>` +
+          P.map(p => `<div class="r"><span><i class="sw" style="background:${p.color}"></i>${p.name}</span><span>${r[p.key]}</span></div>`).join("") +
+          `<div class="r t"><span>Разом</span><span>${total}</span></div>`;
+        tip.style.left = Math.min(Math.max(cx, 90), W - 90) + "px";
+        tip.style.top = (y(total) - 10) + "px";
+        tip.classList.add("on");
+      });
+      hit.addEventListener("mouseleave", () => { groups.forEach(o => o.style.opacity = 1); tip.classList.remove("on"); });
+      groups.push(g);
+      svg.appendChild(g); svg.appendChild(hit);
+    });
+    host.insertBefore(svg, tip);
+  }
+
+  let range = 30;
+  document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll(".seg button").forEach(o => o.classList.toggle("on", o === b));
+    range = +b.dataset.r; draw(range);
+  }));
+  addEventListener("resize", () => draw(range));
+  draw(range);
+})();
+</script>
+</body>
+</html>

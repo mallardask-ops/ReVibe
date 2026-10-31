@@ -1,5 +1,5 @@
-"""Draws the ReVibe mark: a bold pixel R in a yellow-to-red ramp on a dark
-rounded tile.
+"""Draws the ReVibe mark: a pixel RV monogram in a yellow-to-red ramp on a
+dark rounded tile.
 
     python packaging/brand/make_logo.py   # writes the SVGs next to this file
 
@@ -8,17 +8,18 @@ The PNG, ICO and tray sizes are rendered from these SVGs by build_icons.sh.
 from pathlib import Path
 
 HERE = Path(__file__).parent
+# R, two empty columns, then a V with diagonal strokes so the pair stays apart at 24px
 BITMAP = [
-    "XXXXXXX.",
-    "XXXXXXXX",
-    "XX....XX",
-    "XX....XX",
-    "XXXXXXXX",
-    "XXXXXXX.",
-    "XX..XX..",
-    "XX...XX.",
-    "XX....XX",
-    "XX....XX",
+    "XXXXXXX...XX...XX",
+    "XXXXXXXX..XX...XX",
+    "XX....XX..XX...XX",
+    "XX....XX..XX...XX",
+    "XXXXXXXX...XX.XX.",
+    "XXXXXXX....XX.XX.",
+    "XX..XX.....XX.XX.",
+    "XX...XX.....XXX..",
+    "XX....XX....XXX..",
+    "XX....XX.....X...",
 ]
 COLS, ROWS = len(BITMAP[0]), len(BITMAP)
 R = [(c, r) for r, line in enumerate(BITMAP) for c, ch in enumerate(line) if ch == "X"]
@@ -36,7 +37,7 @@ def cells(cell: float, ox: float, oy: float, gap: float) -> str:
 
 
 def tile(size: int = 512) -> str:
-    cell = size * 0.058
+    cell = size * 0.044
     width, height = COLS * cell, ROWS * cell
     ox, oy = (size - width) / 2, (size - height) / 2
     r = size * 0.22
@@ -58,7 +59,7 @@ def tile(size: int = 512) -> str:
 
 def glyph(size: int = 64) -> str:
     """The R alone, transparent, for the favicon and small UI places."""
-    cell = size / (ROWS + 0.6)
+    cell = size / (max(COLS, ROWS) + 0.6)
     ox, oy = (size - COLS * cell) / 2, (size - ROWS * cell) / 2
     return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {size} {size}" width="{size}" height="{size}">
   {cells(cell, ox, oy, cell * 0.06)}
@@ -68,7 +69,7 @@ def glyph(size: int = 64) -> str:
 
 def tray(size: int = 64) -> str:
     """Monochrome R for the system tray (the desktop tints template icons)."""
-    cell = size / (ROWS + 0.6)
+    cell = size / (max(COLS, ROWS) + 0.6)
     ox, oy = (size - COLS * cell) / 2, (size - ROWS * cell) / 2
     rects = "".join(
         f'<rect x="{ox + c * cell:.1f}" y="{oy + r * cell:.1f}" width="{cell:.1f}" height="{cell:.1f}" fill="#ffffff"/>'
