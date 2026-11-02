@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { interruptShell } from "@/lib/api";
 import { usePresence } from "./ui";
 import type { HistoryEntry } from "@/lib/types";
-import { durationSeconds, editChanges, isManualShell, stepStatus, summarizeSteps, type EditHunk } from "@/lib/steps";
+import { durationSeconds, editChanges, isManualShell, stepStatus, summarizeSteps, toolOutputText, type EditHunk } from "@/lib/steps";
 
 // ---------------------------------------------------------------- helpers
 
@@ -38,11 +38,6 @@ function toolInput(e: HistoryEntry): string {
   } catch {
     return String(input);
   }
-}
-
-function toolOutput(e: HistoryEntry): string {
-  const st: any = e.state || {};
-  return st.outputText || st.output || "";
 }
 
 // ---------------------------------------------------------------- Message actions
@@ -272,7 +267,7 @@ export function ToolCallBlock({ e }: { e: HistoryEntry }) {
   const name = d?.toolName || e.title || "tool";
   const Icon = toolIcon(name);
   const status = st.status || "running";
-  const output = toolOutput(e);
+  const output = toolOutputText(e);
   const input = toolInput(e);
   const running = status === "running" || status === "in_progress";
   const failed = status === "failed" || status === "error";

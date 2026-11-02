@@ -17,6 +17,9 @@ from pathlib import Path
 
 from vibe_bridge import BridgeError, VibeAppServer
 
+# Codex often reports tokens after asking for a tool or finishing; Vibe 3 rejects a reply with no counts.
+NO_USAGE = {"prompt_tokens": 0, "completion_tokens": 0}
+
 
 class CodexClient(VibeAppServer):
     def __init__(self, cwd: str):
@@ -133,6 +136,9 @@ class CodexProvider:
                 effort = requested if requested in supported else {"off": "none", "max": "xhigh"}.get(requested)
                 if effort and effort in supported:
                     return effort
+                # Vibe's default, sent as "none" on the wire; these models can't turn thinking off.
+                if requested in ("off", "none"):
+                    return None
                 raise BridgeError("unsupported", "This Codex model does not support the requested reasoning effort.")
             cursor = result.get("nextCursor")
             if not cursor or not isinstance(cursor, str) or cursor in seen:
@@ -175,7 +181,7 @@ class CodexProvider:
             # shortcut: Codex app-server has no hard output-token cap; upgrade when its protocol exposes one.
             if body.get("max_tokens"):
                 instructions += f"\nKeep your answer under {body['max_tokens']} output tokens."
-            instructions += "\nYou are the model for ReVibe. Use only the supplied vibedeck_tool_* dynamic tools for all actions. ReVibe runs them and obtains approvals. Never use built-in tools. Answer the user's request directly."
+            instructions += "\nYou are the model for ReVibe. Use only the supplied vibedeck_tool_* dynamic tools for all actions. ReVibe runs them and obtains approvals. Never use built-in tools. The working directory Codex reports is an empty temporary folder, not the user's project: ignore it, and use the project path given above, or relative paths if none is given. Answer the user's request directly."
             thread = await client.call("thread/start", {"model": body["model"], "modelProvider": "openai",
                 "cwd": home.name, "sandbox": "read-only", "approvalPolicy": "never", "ephemeral": True,
                 "baseInstructions": instructions, "config": overrides, "dynamicTools": tools})
@@ -248,7 +254,7 @@ class CodexProvider:
                             handed_off = True
                             yield {"delta": {"tool_calls": [{"index": 0, "id": key, "type": "function",
                                 "function": {"name": name, "arguments": json.dumps(call["arguments"])}}]}, "finish_reason": None}
-                            yield {"delta": {}, "finish_reason": "tool_calls", "usage": context.pop("usage", {})}
+                            yield {"delta": {}, "finish_reason": "tool_calls", "usage": context.pop("usage", NO_USAGE)}
                             return
                         elif method == "thread/tokenUsage/updated":
                             usage = (params.get("tokenUsage") or {}).get("last") or {}
@@ -259,7 +265,7 @@ class CodexProvider:
                             turn = params.get("turn") or {}
                             if turn.get("status") != "completed":
                                 raise BridgeError("failed", "Codex turn failed or was interrupted. Check native Codex authentication and model access.")
-                            yield {"delta": {}, "finish_reason": "stop", "usage": context.get("usage", {})}
+                            yield {"delta": {}, "finish_reason": "stop", "usage": context.get("usage", NO_USAGE)}
                             return
         finally:
             if context and not handed_off:

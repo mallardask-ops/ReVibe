@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 import fcntl
 import hashlib
 import json
@@ -14,11 +15,12 @@ from typing import Annotated
 
 from agent_routing import AgentJob, delegation_instructions, describe_models, read_settings, select_model
 from dotenv import load_dotenv
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 from pydantic import Field
+from vibe.app_server._cached_layers import apply_cached_layers
 from vibe.core.config.default_orchestrator import build_default_orchestrator
 from vibe.core.config.harness_files import init_harness_files_manager
-from vibe.core.llm.backend.factory import create_backend
+from vibe.core.llm.completion import CompletionTransport, complete_once
 from vibe.core.types import LLMMessage, Role
 
 # Native CLI uses this same credential file; MCP does not inherit API key env vars.
@@ -28,7 +30,7 @@ os.environ.setdefault("DBUS_SESSION_BUS_ADDRESS", "unix:path=" + os.environ["XDG
 
 init_harness_files_manager("user", "project")
 
-server = FastMCP("vibedeck_providers", log_level="ERROR", instructions=delegation_instructions())
+server = MCPServer("vibedeck_providers", log_level="ERROR", instructions=delegation_instructions())
 WORKERS = asyncio.Semaphore(2)
 EDITOR = asyncio.Lock()
 
@@ -54,32 +56,37 @@ async def provider_task(
         return await _context_task(model, task, max_tokens, effort)
 
 
+async def _load_config():
+    """Vibe's config as the app-server sees it: GLM and other hosted models come from the cached catalog."""
+    orchestrator = await build_default_orchestrator()
+    await apply_cached_layers(orchestrator, None)
+    return orchestrator.config
+
+
 async def _context_task(model: str, task: str, max_tokens: int, effort: str) -> dict:
-    config = (await build_default_orchestrator()).config
+    config = await _load_config()
     settings = read_settings()
     if settings.policy == "off":
         raise ValueError("Subagents are disabled in Settings → Config.")
     selected, _ = select_model(config.available_models(), AgentJob(model=model, task=task, effort=effort), settings)
     provider = config.get_provider_for_model(selected)
-    text, usage = "", {}
+    transport = dataclasses.replace(CompletionTransport.from_config(config), retry_budget_s=0)
     try:
-        backend = create_backend(provider=provider, retry_max_elapsed_time=0)
-        async with asyncio.timeout(180), backend:
-            async for chunk in backend.complete_streaming(model=selected, temperature=selected.temperature, max_tokens=max_tokens,
+        async with asyncio.timeout(180):
+            reply = await complete_once(provider=provider, model=selected, max_tokens=max_tokens, metadata={}, transport=transport,
+                temperature=selected.temperature,
                 messages=[LLMMessage(role=Role.system, content="Complete this bounded task concisely. Return findings or a proposed patch. Do not claim to have executed tools or changed files."),
-                          LLMMessage(role=Role.user, content=task)]):
-                text += chunk.message.content or ""
-                if chunk.usage:
-                    usage = chunk.usage.model_dump()
+                          LLMMessage(role=Role.user, content=task)])
     except Exception:
         raise ValueError("Provider worker failed. Check key/model/quota. No automatic replay was made.") from None
+    text, usage = reply.text, reply.usage.model_dump()
     return {"provider": provider.name, "model": selected.alias, "thinking": selected.thinking, "text": text, "usage": usage}
 
 
 @server.tool()
 async def list_models() -> list[dict]:
     """List configured provider model aliases allowed for explicit delegation."""
-    config = (await build_default_orchestrator()).config
+    config = await _load_config()
     return describe_models(config.available_models())
 
 
@@ -178,7 +185,7 @@ async def delegate(
         raise ValueError("Automatic workers are read-only. Request editing explicitly under the parent approval policy.")
     if sum(job.access == "edit" for job in jobs) > 1:
         raise ValueError("Run only one editing worker per batch; use read-only reviewers alongside it.")
-    config = (await build_default_orchestrator()).config
+    config = await _load_config()
     chosen = [(job, *select_model(config.available_models(), job, settings)) for job in jobs]
     identities = [(model.alias, job.task.strip(), job.access) for job, model, _ in chosen]
     if len(set(identities)) != len(identities):

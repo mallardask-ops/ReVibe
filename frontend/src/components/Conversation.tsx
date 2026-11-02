@@ -11,6 +11,7 @@ import { QueueBar } from "./QueueBar";
 import { ReviewPanel, pendingFiles } from "./ReviewPanel";
 import { RewindDialog } from "./RewindDialog";
 import { EntryBlock, MessageActions, StepGroup } from "./MessageBlocks";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { groupSteps } from "@/lib/steps";
 import { useConversation } from "@/hooks/useConversation";
 import { sendTurn, enqueueTurn, forkSession, compactSession, runShell, interruptTurn, resolveCallback, patchSession, releaseSession, deleteSession, getReview, type ReviewState } from "@/lib/api";
@@ -493,9 +494,11 @@ export function Conversation({ session }: { session: Session }) {
             const lastId = item.kind === "group" ? item.entries[item.entries.length - 1].id : item.entry.id;
             const end = turnEnds.get(lastId);
             return <React.Fragment key={item.kind === "group" ? item.entries[0].id : item.entry.id}>
-              {item.kind === "group"
-                ? <StepGroup entries={item.entries} />
-                : <EntryBlock e={item.entry} onResolve={onResolve} expandReasoning={session.lane === "work"} reveal={reveal(item.entry.id)} />}
+              <ErrorBoundary fallback={<div className="px-6 py-1.5 text-xs text-text-faint">This step can't be shown.</div>}>
+                {item.kind === "group"
+                  ? <StepGroup entries={item.entries} />
+                  : <EntryBlock e={item.entry} onResolve={onResolve} expandReasoning={session.lane === "work"} reveal={reveal(item.entry.id)} />}
+              </ErrorBoundary>
               {end && end.turnId !== conv.activeTurnId && end.seconds >= 1 && (
                 <div className="px-6 pt-1 pb-2 text-[11px] text-text-faint">
                   Worked {formatDuration(end.seconds)}{end.latest && lastTurnTokens > 0 ? ` · ${formatTokens(lastTurnTokens)} tokens` : ""}

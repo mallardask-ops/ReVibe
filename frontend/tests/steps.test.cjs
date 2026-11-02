@@ -56,3 +56,16 @@ test('file edits count only the lines that changed', () => {
   assert.deepEqual([editChanges(write).added, editChanges(write).removed], [2, 0]);
   assert.equal(editChanges({ type: 'effect', detail: { kind: 'shell' } }), null);
 });
+
+test('tool output is always text, whatever shape Vibe sends', () => {
+  const out = (output, outputText = '') => steps.toolOutputText({ state: { output, outputText } });
+  assert.equal(out(null, 'plain'), 'plain');
+  assert.equal(out({ filePath: '/a', content: 'file body' }), 'file body');
+  assert.equal(out({ stdout: 'hi', stderr: 'oops', output: '' }), 'hi\noops');
+  assert.equal(out({ stdout: '', stderr: '', output: '' }), '');
+  assert.equal(out({ content: [], error: { message: 'not found' } }), 'not found');
+  assert.equal(out(undefined), '');
+  const rest = out({ _meta: { a: 1 }, type: 'success', content: [] });
+  assert.equal(typeof rest, 'string');
+  assert.deepEqual(JSON.parse(rest), { type: 'success', content: [] });
+});

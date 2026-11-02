@@ -86,6 +86,24 @@ export function stepStatus(e: HistoryEntry): "running" | "failed" | "done" {
   return "done";
 }
 
+/**
+ * A tool's result as text. Vibe leaves outputText empty for most tools and
+ * puts a structured object in output, so pull out what a person would read.
+ */
+export function toolOutputText(e: HistoryEntry): string {
+  const st: any = e.state || {};
+  if (typeof st.outputText === "string" && st.outputText) return st.outputText;
+  const out = st.output;
+  if (out == null) return "";
+  if (typeof out !== "object") return String(out);
+  if (typeof out.error?.message === "string") return out.error.message;
+  const texts = [out.stdout, out.stderr, out.output, out.content];
+  const text = texts.filter(v => typeof v === "string" && v).join("\n");
+  if (text || typeof out.stdout === "string") return text;
+  const { _meta, ...rest } = out;
+  return JSON.stringify(rest, null, 2);
+}
+
 /** Seconds between an entry's creation and last update (timestamps in s or ms). */
 export function durationSeconds(e: HistoryEntry): number | null {
   const { createdAt, updatedAt } = e;

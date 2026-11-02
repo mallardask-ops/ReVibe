@@ -380,7 +380,7 @@ def test_provider_presets_and_native_worker_lifecycle(cfg):
     providers.sync_subagents(cfg)
     tool = cfg.parent / "vibedeck/provider_task.py"
     assert tool.read_text().startswith("# Managed by VibeDeck: provider routing tool")
-    assert "create_backend" in tool.read_text()
+    assert "complete_once" in tool.read_text()
     assert {a["model"] for a in providers.list_providers(cfg)["subagents"]} >= {"devstral-ollama", "mistral-large-4"}
     providers.remove_provider("ollama", cfg)
     providers.sync_subagents(cfg)

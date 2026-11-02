@@ -187,3 +187,27 @@ def test_codex_http_auth_and_validation(monkeypatch):
     response = client.post('/api/codex/v1/chat/completions', headers=headers,
         json={'model': 'test', 'messages': [{'role': 'user', 'content': 'hi'}], 'stream': True})
     assert response.status_code == 400 and 'private' not in response.text
+
+
+@pytest.mark.asyncio
+async def test_reply_always_carries_token_counts(monkeypatch):
+    provider = codex_provider.CodexProvider()
+    value = context(provider, [{'method': 'turn/completed', 'params': {'turn': {'status': 'completed'}}}])
+    async def create(body):
+        return value
+    monkeypatch.setattr(provider, 'new_context', create)
+    body = {'model': 'test', 'messages': [{'role': 'user', 'content': 'hi'}]}
+    chunks = [chunk async for chunk in provider.chunks(body)]
+    assert chunks[-1]['usage'] == {'prompt_tokens': 0, 'completion_tokens': 0}
+
+
+@pytest.mark.asyncio
+async def test_off_falls_back_to_model_default_when_unsupported():
+    class Client:
+        async def call(self, method, params):
+            return {'data': [{'id': 'm', 'supportedReasoningEfforts': [{'reasoningEffort': 'low'}]}]}
+    provider = codex_provider.CodexProvider()
+    assert await provider.resolve_effort(Client(), 'm', 'off') is None
+    assert await provider.resolve_effort(Client(), 'm', 'none') is None
+    with pytest.raises(codex_provider.BridgeError):
+        await provider.resolve_effort(Client(), 'm', 'high')

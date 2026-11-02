@@ -11,6 +11,7 @@ import { alert } from "@/lib/alerts";
 import { Button, Spinner } from "./ui";
 import { useSessions, useHealth, useAppConfig, normalizeLane } from "@/hooks/useSessions";
 import type { Lane } from "@/lib/types";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 export function AppShell() {
   const [lane, setLane] = React.useState<Lane>(() => {
@@ -154,7 +155,9 @@ export function AppShell() {
           <Backdrop fallback={location.pathname === "/" ? "idle" : "page"} />
           <div className="relative h-full">
             <React.Suspense fallback={<div role="status" className="flex h-full items-center justify-center gap-2 text-sm text-text-muted"><Spinner />Loading...</div>}>
-              <Outlet context={{ lane, sessions, health, config, loading, error }} />
+              <ErrorBoundary key={location.pathname} fallback={<div role="alert" className="flex h-full items-center justify-center text-sm text-text-muted">This page hit an error. Open another page or restart ReVibe.</div>}>
+                <Outlet context={{ lane, sessions, health, config, loading, error }} />
+              </ErrorBoundary>
             </React.Suspense>
           </div>
         </main>
