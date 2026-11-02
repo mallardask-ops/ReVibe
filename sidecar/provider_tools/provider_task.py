@@ -33,6 +33,8 @@ init_harness_files_manager("user", "project")
 server = MCPServer("vibedeck_providers", log_level="ERROR", instructions=delegation_instructions())
 WORKERS = asyncio.Semaphore(2)
 EDITOR = asyncio.Lock()
+# Counts every prompt re-sent across turns; Vibe's system prompt alone is about 15k, Codex adds 8k.
+REPO_WORKER_TOKENS = 200_000
 
 
 @server.tool()
@@ -100,7 +102,7 @@ async def repo_agent(selected, job: AgentJob) -> dict:
                VIBE_API_RETRY_MAX_ELAPSED_TIME="0")
     tools = ["read_file", "grep"] + (["write_file", "edit"] if job.access == "edit" else [])
     args = [cli, "--trust", "--agent", "accept-edits" if job.access == "edit" else "ask",
-            "--prompt", "--max-turns", "6", "--max-tokens", "24000", "--output", "json"]
+            "--prompt", "--max-turns", "6", "--max-tokens", str(REPO_WORKER_TOKENS), "--output", "json"]
     for tool in tools:
         args.extend(["--enabled-tools", tool])
     lock = None
@@ -120,6 +122,8 @@ async def repo_agent(selected, job: AgentJob) -> dict:
             stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
         prompt = "Complete this bounded task. Do not delegate or read credentials. Return concise findings or a summary of your changes.\n" + job.task
         stdout, _ = await asyncio.wait_for(process.communicate(prompt.encode()), timeout=175)
+        if process.returncode == 3:
+            raise ValueError(f"Worker stopped at its limit of 6 turns, {REPO_WORKER_TOKENS} tokens or 175 seconds. Give it a smaller task or use access='context'.")
         if process.returncode:
             raise ValueError("Repository agent failed; check the provider configuration. No automatic replay was made.")
         history = json.loads(stdout)
@@ -173,7 +177,7 @@ async def delegate(
     uses the Vibe tool harness with read/grep only; edit also allows file edits.
     Workers cannot run shell commands, delegate recursively, or approve actions.
     Parent reviews results, runs tests, and applies its own approval policy.
-    Each repository worker has six turns, 24k cumulative tokens and 175 seconds.
+    Each repository worker has six turns, 200k cumulative tokens and 175 seconds.
     Failed jobs are not retried. Report failures and partial edits to the user.
     """
     settings = read_settings()
@@ -204,8 +208,10 @@ async def delegate(
                 else:
                     output = await repo_agent(model, job)
                 return {**output, **result, "status": "completed"}
+            except ValueError as exc:
+                return {**result, "status": "failed", "detail": f"{exc} No fallback or replay. Inspect any partial edits before retrying."}
             except Exception:
-                return {**result, "status": "failed", "detail": "Worker failed or reached a limit. No fallback or replay. Inspect its CLI session and any partial edits before retrying."}
+                return {**result, "status": "failed", "detail": "Worker failed. No fallback or replay. Inspect its CLI session and any partial edits before retrying."}
     return await asyncio.gather(*(run(*item) for item in chosen))
 
 
