@@ -92,6 +92,11 @@ class BridgeError(RuntimeError):
         self.data = data
 
 
+# Resume finishes recovering an interrupted turn first, which takes minutes for
+# a big one. Timing out kills the app-server and restarts that recovery.
+RESUME_TIMEOUT = 600.0
+
+
 class VibeAppServer:
     """Async JSON-RPC client for one ``vibe-app-server`` subprocess.
 
@@ -378,7 +383,7 @@ class VibeAppServer:
     async def resume_session(self, session_id: str, history_limit: int = 200) -> dict:
         res = await self.call("session/resume", {
             "sessionId": session_id, "historyLimit": history_limit,
-        })
+        }, timeout=RESUME_TIMEOUT)
         state = res.get("state", {})
         self.session_id = state.get("session", {}).get("id", session_id)
         self.last_event_id = state.get("eventId", 0)

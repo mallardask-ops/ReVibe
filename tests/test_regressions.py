@@ -320,3 +320,15 @@ async def test_tap_overflow_reconciles_without_clearing_running_status():
     assert len(bridge._tap_queues) == 1
     await server.manager.close(sid)
     await server._stop_tap(sid)
+
+
+@pytest.mark.asyncio
+async def test_resume_outlasts_recovery_of_an_interrupted_turn():
+    bridge = VibeAppServer("/tmp", server_cmd="fake")
+    seen = {}
+    async def call(method, params=None, timeout=60.0):
+        seen["timeout"] = timeout
+        return {"state": {"session": {"id": "s"}}}
+    bridge.call = call
+    await bridge.resume_session("s")
+    assert seen["timeout"] > 60

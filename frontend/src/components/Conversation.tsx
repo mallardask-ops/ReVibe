@@ -118,6 +118,21 @@ function composerHint(session: Session, running: boolean, started: boolean): str
   return FOLLOW_UPS[pick](project);
 }
 
+/** Opening normally takes seconds; say why when Vibe is recovering an interrupted run. */
+function LoadingConversation() {
+  const [slow, setSlow] = React.useState(false);
+  React.useEffect(() => {
+    const timer = window.setTimeout(() => setSlow(true), 8000);
+    return () => window.clearTimeout(timer);
+  }, []);
+  return (
+    <div className="my-auto flex items-center gap-2 px-6 py-8 text-text-muted text-sm">
+      <Loader2 size={14} className="animate-spin text-primary" />
+      {slow ? "Still opening. Vibe may be recovering an interrupted run, which can take a few minutes." : "Loading conversation…"}
+    </div>
+  );
+}
+
 export function Conversation({ session }: { session: Session }) {
   const [released, setReleased] = React.useState(false);
   const conv = useConversation(session.id, released);
@@ -481,9 +496,7 @@ export function Conversation({ session }: { session: Session }) {
             ? <button onClick={showEarlier} className="mx-auto my-3 rounded-md px-2.5 py-1 text-sm text-text-muted transition-colors hover:bg-surface-muted hover:text-text">Show {Math.min(hidden, PAGE)} earlier steps</button>
             : conv.historyBeforeCursor && <button onClick={() => void conv.loadEarlier()} className="mx-auto my-3 rounded-md px-2.5 py-1 text-sm text-text-muted transition-colors hover:bg-surface-muted hover:text-text">Load earlier messages</button>}
           {conv.loading && (
-            <div className="my-auto flex items-center gap-2 px-6 py-8 text-text-muted text-sm">
-              <Loader2 size={14} className="animate-spin text-primary" /> Loading conversation…
-            </div>
+            <LoadingConversation />
           )}
           {!conv.loading && conv.entries.length === 0 && (
             <div className="my-auto px-6 py-10 text-text-muted text-sm">
