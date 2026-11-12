@@ -26,6 +26,7 @@
     "appId": "io.github.mallardask_ops.revibe",
     "productName": "ReVibe",
     "artifactName": "ReVibe-${version}-${arch}.${ext}",
+    "publish": null,
     "directories": {
       "output": "../../build/release"
     },
