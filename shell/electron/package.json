@@ -1,6 +1,6 @@
 {
   "name": "revibe",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "ReVibe, a desktop app for Mistral Vibe",
   "main": "main.js",
   "scripts": {

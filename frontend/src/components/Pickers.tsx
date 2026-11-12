@@ -231,6 +231,11 @@ export function ModelPicker({
               );
             })}
           </div>
+          {models.length <= 1 && (
+            <p className="border-t border-border px-3 py-2 text-xs text-text-faint">
+              Models come from the Vibe CLI. Add more in Settings → Models.
+            </p>
+          )}
         </div>
       )}
     </div>

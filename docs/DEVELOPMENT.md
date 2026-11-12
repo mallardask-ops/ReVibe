@@ -2,7 +2,7 @@
 
 ReVibe is the master source repository for Fedora and Debian. Both use the same frontend, sidecar, Electron shell, and installer. Keep platform changes here and verify them with the Linux CI matrix.
 
-Version 1.0.0 is the current release. Source archives, a cloneable Git bundle, and checksums are kept separately from Git-tracked source. Dependencies, browser profiles, credentials, and conversation databases are excluded.
+Version 1.0.1 is the current release. Source archives, a cloneable Git bundle, and checksums are kept separately from Git-tracked source. Dependencies, browser profiles, credentials, and conversation databases are excluded.
 
 ## Checks
 

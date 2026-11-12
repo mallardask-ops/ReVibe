@@ -157,12 +157,12 @@ function ProviderCard({ provider, mode, onChanged }: {
     {mode === "models" && <div className="border-t border-border">
       {provider.models.map(model => <div key={model.alias} className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-b-0">
         <div className="min-w-0 flex-1"><p className="text-sm break-words">{model.alias}</p><p className="text-xs text-text-muted font-mono break-all mt-0.5">{model.name}</p></div>
-        {!provider.builtin && <Button size="icon" variant="ghost" aria-label={`Remove model ${model.alias}`} disabled={busy} onClick={() => void run(() => removeProviderModel(provider.name, model.alias))}><Trash2 size={14} /></Button>}
+        <Button size="icon" variant="ghost" aria-label={`Remove model ${model.alias}`} disabled={busy} onClick={() => void run(() => removeProviderModel(provider.name, model.alias))}><Trash2 size={14} /></Button>
       </div>)}
-      {!provider.builtin && <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4">
         <div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" disabled={busy} onClick={() => void checkConnection()}>Load models</Button><Button variant="ghost" size="sm" disabled={busy} onClick={() => setAdding(true)}><Plus size={14} />Add model</Button></div>
         {adding && <div className="space-y-3">
-          {!!catalog.length && <label className="block text-xs font-medium text-text-muted">Available models<Select aria-label="Available models" className="mt-2 w-full" value={newModel.name} onChange={id => setNewModel(m => ({...m, name:id, alias:m.alias || `${provider.name}-${id.toLowerCase().replace(/[^a-z0-9._-]/g, '-').slice(0,40)}`}))} options={[{value:"",label:"Choose a model"}, ...catalog.map(m => ({value:m.id,label:m.name}))]} /></label>}
+          {!!catalog.length && <label className="block text-xs font-medium text-text-muted">Available models<Select aria-label="Available models" className="mt-2 w-full" value={newModel.name} onChange={id => setNewModel(m => ({...m, name:id, alias:m.alias || (provider.name === "mistral" ? id : `${provider.name}-${id.toLowerCase().replace(/[^a-z0-9._-]/g, '-').slice(0,40)}`)}))} options={[{value:"",label:"Choose a model"}, ...catalog.map(m => ({value:m.id,label:m.name}))]} /></label>}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label className="text-xs font-medium text-text-muted">Model ID<Input className="mt-2" value={newModel.name} onChange={e => setNewModel(m => ({...m,name:e.target.value}))} placeholder="Model ID from provider" /></label>
             <label className="text-xs font-medium text-text-muted">Alias<Input className="mt-2" value={newModel.alias} onChange={e => setNewModel(m => ({...m,alias:e.target.value}))} placeholder="Name shown in the model picker" /></label>
@@ -170,8 +170,7 @@ function ProviderCard({ provider, mode, onChanged }: {
           <label className="block text-xs font-medium text-text-muted">Temperature (optional)<Input className="mt-2 max-w-40" value={newModel.temperature} onChange={e => setNewModel(m => ({...m,temperature:e.target.value}))} placeholder="Provider default" type="number" step="0.1" /></label>
           <div className="flex flex-wrap gap-2"><Button variant="primary" size="sm" disabled={!newModel.name.trim() || !newModel.alias.trim() || busy} onClick={() => void addModel()}>Save model</Button><Button variant="ghost" size="sm" disabled={busy} onClick={() => setAdding(false)}>Cancel</Button></div>
         </div>}
-      </div>}
-      {!provider.models.length && provider.builtin && <p className="px-4 pb-4 text-sm text-text-muted">No models registered.</p>}
+      </div>
     </div>}
     {msg && <p role="status" className={`px-4 pb-4 text-xs ${msg.danger ? "text-danger" : "text-success"}`}>{msg.text}</p>}
   </section>;
