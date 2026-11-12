@@ -2,7 +2,7 @@
 
 ReVibe is the master source repository for Fedora and Debian. Both use the same frontend, sidecar, Electron shell, and installer. Keep platform changes here and verify them with the Linux CI matrix.
 
-Version 1.0.0 was the first release; the current version is 1.1.0. Source archives, a cloneable Git bundle, and checksums are kept separately from Git-tracked source. Dependencies, browser profiles, credentials, and conversation databases are excluded.
+Version 1.0.0 is the current release. Source archives, a cloneable Git bundle, and checksums are kept separately from Git-tracked source. Dependencies, browser profiles, credentials, and conversation databases are excluded.
 
 ## Checks
 
@@ -65,7 +65,7 @@ Workspace tests check pagination, safe metadata, credential redaction, validatio
 
 The integration source is released under the MIT license. Review the README screenshots and run the checks above, then scan the history with `gitleaks git --redact --log-opts=--all .`.
 
-The repository is `https://github.com/OSINTCabal/ReVibe`. Check `git remote -v` before pushing. Release tags use `vMAJOR.MINOR.PATCH`, starting at `v1.0.0`.
+The repository is `https://github.com/mallardask-ops/ReVibe`. Check `git remote -v` before pushing. Release tags use `vMAJOR.MINOR.PATCH`, starting at `v1.0.0`.
 
 [Back to ReVibe](../README.md)
 
