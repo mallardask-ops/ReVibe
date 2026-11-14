@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import os
 import re
-import shutil
 import subprocess
 from pathlib import Path
 from typing import Optional
@@ -24,9 +23,16 @@ def package_dir(app_server: Optional[str]) -> Optional[Path]:
     """``site-packages/vibe`` of the environment that runs ``app_server``."""
     if not app_server:
         return None
-    env = Path(os.path.realpath(app_server)).parent.parent
-    for init in sorted(env.glob("lib/python*/site-packages/vibe/__init__.py")):
-        return init.parent
+    envs = [Path(os.path.realpath(app_server)).parent.parent]
+    if os.name == "nt":
+        # uv's ~/.local/bin entries on Windows are copies, not links: look in
+        # the tool environments too (Scripts\ and Lib\site-packages there).
+        from vibe_bridge import _tool_dirs
+        envs += [d.parent for d in _tool_dirs() if d.name == "Scripts"]
+    for env in envs:
+        for pattern in ("lib/python*/site-packages/vibe/__init__.py", "Lib/site-packages/vibe/__init__.py"):
+            for init in sorted(env.glob(pattern)):
+                return init.parent
     return None
 
 
@@ -62,7 +68,8 @@ def _read_version(app_server: str) -> Optional[str]:
                 return m.group(1)
         except OSError:
             pass
-    cli = shutil.which("vibe")
+    from vibe_bridge import find_vibe_executable
+    cli = find_vibe_executable("vibe")
     if not cli:
         return None
     try:

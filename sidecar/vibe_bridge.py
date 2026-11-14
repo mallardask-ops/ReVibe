@@ -59,24 +59,47 @@ def valid_reasoning(level: str) -> bool:
 APPROVAL_DECISIONS = ("approve", "approve_for_session", "approve_permanently", "deny", "cancel_turn")
 
 
+def _tool_dirs() -> list[Path]:
+    """Folders where a ``uv tool``/``pipx`` install of mistral-vibe keeps its executables.
+
+    The desktop app often starts without the user's shell PATH (a Start menu or
+    desktop launcher), so these are searched before falling back to PATH.
+    """
+    home = Path.home()
+    if os.name == "nt":
+        appdata = Path(os.environ.get("APPDATA") or home / "AppData/Roaming")
+        local = Path(os.environ.get("LOCALAPPDATA") or home / "AppData/Local")
+        roots = [Path(os.environ["UV_TOOL_DIR"])] if os.environ.get("UV_TOOL_DIR") else []
+        roots += [appdata / "uv/tools", appdata / "uv/data/tools", local / "uv/tools"]
+        dirs = [Path(os.environ["UV_TOOL_BIN_DIR"])] if os.environ.get("UV_TOOL_BIN_DIR") else []
+        dirs += [home / ".local/bin"]
+        dirs += [r / "mistral-vibe/Scripts" for r in roots]
+        dirs += [home / "pipx/venvs/mistral-vibe/Scripts", local / "pipx/pipx/venvs/mistral-vibe/Scripts"]
+        return dirs
+    data = Path(os.environ.get("XDG_DATA_HOME") or home / ".local/share")
+    dirs = [Path(os.environ["UV_TOOL_BIN_DIR"])] if os.environ.get("UV_TOOL_BIN_DIR") else []
+    if os.environ.get("UV_TOOL_DIR"):
+        dirs.append(Path(os.environ["UV_TOOL_DIR"]) / "mistral-vibe/bin")
+    return dirs + [home / ".local/bin", data / "uv/tools/mistral-vibe/bin",
+                   home / ".local/pipx/venvs/mistral-vibe/bin", data / "pipx/venvs/mistral-vibe/bin"]
+
+
+def find_vibe_executable(name: str) -> Optional[str]:
+    """``name`` (``vibe`` or ``vibe-app-server``) from the Vibe install, else from PATH."""
+    exe = name + (".exe" if os.name == "nt" else "")
+    for folder in _tool_dirs():
+        candidate = folder / exe
+        if candidate.is_file():
+            return str(candidate)
+    return shutil.which(name)
+
+
 def find_app_server() -> str:
     """Locate the ``vibe-app-server`` executable."""
     env = os.environ.get("VIBEDECK_APP_SERVER")
     if env:
         return env
-    # uv tool install puts it here.
-    home = Path.home()
-    exe = ".exe" if os.name == "nt" else ""
-    candidates = [
-        home / f".local/bin/vibe-app-server{exe}",
-        home / ".local/share/uv/tools/mistral-vibe/bin/vibe-app-server",
-        # uv on Windows keeps tools under %APPDATA%\uv\tools
-        Path(os.environ.get("APPDATA") or home) / "uv/tools/mistral-vibe/Scripts/vibe-app-server.exe",
-    ]
-    for c in candidates:
-        if c.exists():
-            return str(c)
-    found = shutil.which("vibe-app-server")
+    found = find_vibe_executable("vibe-app-server")
     if found:
         return found
     raise FileNotFoundError(

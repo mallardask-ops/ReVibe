@@ -3,8 +3,8 @@
 Responsibilities:
   1. Manage the user's Mistral API key so the direct-chat surface and the Studio
      playground work. Resolution order: environment variable -> explicit
-     "disabled" marker in the vibedeck env file -> system keyring -> vibedeck
-     env file. The key can be added and removed at will (set_api_key /
+     "disabled" marker in the vibedeck env file -> vibedeck env file -> system
+     keyring -> the Vibe CLI's own ``$VIBE_HOME/.env``. The key can be added and removed at will (set_api_key /
      remove_api_key); it is never logged or written to the DB.
   2. Thin async helpers over api.mistral.ai: chat completions (streaming), model
      catalog, and usage.
@@ -44,6 +44,19 @@ def env_file_path() -> Path:
     return Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "vibedeck" / "env"
 
 
+def vibe_env_file_path() -> Path:
+    """``$VIBE_HOME/.env``: where ``vibe --setup`` saves the key when no keyring works."""
+    return Path(os.environ.get("VIBE_HOME") or Path.home() / ".vibe").expanduser() / ".env"
+
+
+def _vibe_env_key() -> Optional[str]:
+    try:
+        val = _read_env_file(vibe_env_file_path()).get("MISTRAL_API_KEY", "")
+    except (OSError, ValueError):
+        return None
+    return val if val and val != "YOUR_KEY" and len(val) > 10 else None
+
+
 def _keyring_key() -> Optional[str]:
     """Look the key up in the system keyring (same store the vibe CLI uses)."""
     try:
@@ -62,7 +75,7 @@ def _read_env_file(path: Path) -> dict[str, str]:
     out: dict[str, str] = {}
     if not path.exists():
         return out
-    for line in path.read_text().splitlines():
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
         line = line.strip()
         if not line or line.startswith("#"):
             continue
@@ -83,7 +96,7 @@ def _update_env_file(path: Path, updates: dict[str, Optional[str]]) -> None:
     """
     path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     os.chmod(path.parent, 0o700)
-    lines = path.read_text().splitlines() if path.exists() else []
+    lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
     out: list[str] = []
     seen: set[str] = set()
     for line in lines:
@@ -105,7 +118,7 @@ def _update_env_file(path: Path, updates: dict[str, Optional[str]]) -> None:
             out.append(f"{key}={val}")
     fd, temporary = tempfile.mkstemp(prefix=".env-", dir=path.parent)
     try:
-        with os.fdopen(fd, "w") as stream:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as stream:
             stream.write("\n".join(out) + ("\n" if out else ""))
         os.replace(temporary, path)
     finally:
@@ -130,7 +143,7 @@ def resolve_api_key() -> Optional[str]:
     val = entries.get("MISTRAL_API_KEY", "")
     if val and val != "YOUR_KEY" and len(val) > 10:
         return val
-    return _keyring_key()
+    return _keyring_key() or _vibe_env_key()
 
 
 def _fingerprint(key: Optional[str]) -> Optional[str]:
@@ -158,6 +171,10 @@ def api_key_status() -> dict:
     if kr:
         return {"present": True, "source": "keyring", "disabled": False,
                 "file": str(env_file_path()), "fingerprint": _fingerprint(kr)}
+    vk = _vibe_env_key()
+    if vk:
+        return {"present": True, "source": "vibe", "disabled": False,
+                "file": str(env_file_path()), "fingerprint": _fingerprint(vk)}
     return {"present": False, "source": None, "disabled": False,
             "file": str(env_file_path()), "fingerprint": None}
 

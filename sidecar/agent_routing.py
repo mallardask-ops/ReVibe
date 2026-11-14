@@ -36,7 +36,7 @@ def settings_path() -> Path:
 
 def read_settings() -> AgentSettings:
     try:
-        return AgentSettings.model_validate_json(settings_path().read_text())
+        return AgentSettings.model_validate_json(settings_path().read_text(encoding='utf-8'))
     except FileNotFoundError:
         return AgentSettings()
     except (ValueError, OSError) as exc:
@@ -49,7 +49,7 @@ def write_settings(settings: AgentSettings) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary = tempfile.mkstemp(prefix='.agents-', dir=target.parent)
     try:
-        with os.fdopen(fd, 'w') as stream:
+        with os.fdopen(fd, 'w', encoding='utf-8', newline='\n') as stream:
             stream.write(settings.model_dump_json(indent=2) + '\n')
         os.replace(temporary, target)
         sync_instructions(target.parent.parent, settings)
@@ -140,7 +140,7 @@ def _instruction_document(home: Path, settings: AgentSettings) -> tuple[Path, st
     target = home / 'AGENTS.md'
     if target.is_symlink():
         raise ValueError('VIBE_HOME/AGENTS.md is a symlink; a regular Vibe instructions file is needed for managed subagent policy.')
-    original = target.read_text() if target.exists() else ''
+    original = target.read_text(encoding='utf-8') if target.exists() else ''
     section = _START + '\n' + delegation_instructions(settings) + '\n' + _END
     if _START in original or _END in original:
         if original.count(_START) != 1 or original.count(_END) != 1 or original.index(_END) < original.index(_START):
@@ -156,18 +156,18 @@ def _instruction_document(home: Path, settings: AgentSettings) -> tuple[Path, st
 def sync_instructions(home: Path, settings: AgentSettings | None = None) -> None:
     if settings is None:
         path = home / 'vibedeck/agents.json'
-        settings = AgentSettings.model_validate_json(path.read_text()) if path.exists() else AgentSettings()
+        settings = AgentSettings.model_validate_json(path.read_text(encoding='utf-8')) if path.exists() else AgentSettings()
     target, original, updated = _instruction_document(home, settings)
     if updated == original:
         return
     target.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary = tempfile.mkstemp(prefix='.agents-doc-', dir=target.parent)
     try:
-        with os.fdopen(fd, 'w') as stream:
+        with os.fdopen(fd, 'w', encoding='utf-8', newline='\n') as stream:
             stream.write(updated)
         if target.exists():
             os.chmod(temporary, target.stat().st_mode & 0o777)
-        if (target.read_text() if target.exists() else '') != original:
+        if (target.read_text(encoding='utf-8') if target.exists() else '') != original:
             raise ValueError('Vibe instructions changed externally; refresh before saving.')
         os.replace(temporary, target)
     finally:

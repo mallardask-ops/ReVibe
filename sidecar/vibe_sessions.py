@@ -88,7 +88,7 @@ def cleanup_store_dir(session_id: str) -> None:
             if not meta.is_file():
                 continue
             try:
-                if json.loads(meta.read_text()).get("session_id") == session_id:
+                if json.loads(meta.read_text(encoding="utf-8")).get("session_id") == session_id:
                     shutil.rmtree(d, ignore_errors=True)
             except (OSError, ValueError):
                 continue

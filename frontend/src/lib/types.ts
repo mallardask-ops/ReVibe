@@ -69,7 +69,7 @@ export interface Health {
   app_server: boolean;
   vibe_cli: boolean;
   api_key: boolean;
-  api_key_source?: "env" | "keyring" | "file" | "disabled" | null;
+  api_key_source?: "env" | "keyring" | "file" | "vibe" | "disabled" | null;
   default_model: string;
   default_agent: string;
   version: string;
@@ -92,7 +92,7 @@ export interface VibeReleaseNotes extends VibeInstall {
 /** Where the effective Mistral API key comes from — never includes the key itself. */
 export interface ApiKeyStatus {
   present: boolean;
-  source: "env" | "keyring" | "file" | "disabled" | null;
+  source: "env" | "keyring" | "file" | "vibe" | "disabled" | null;
   disabled: boolean;
   file: string;
   /** masked key preview (first 4 + last 4) — never the key itself */

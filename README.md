@@ -21,9 +21,9 @@ Chat and code with Vibe in a real window: review every edit, rewind any message,
 
 | Platform | File | Notes |
 | --- | --- | --- |
-| Linux (x86_64) | `ReVibe-1.0.1-x86_64.AppImage` | `chmod +x` it and run. No install needed. |
-| Windows 10/11 | `ReVibe-1.0.1-setup.exe` | Installer with Start menu shortcut. |
-| Windows 10/11 | `ReVibe-1.0.1-portable.exe` | One file, nothing installed. |
+| Linux (x86_64) | `ReVibe-1.0.2-x86_64.AppImage` | `chmod +x` it and run. No install needed. |
+| Windows 10/11 | `ReVibe-1.0.2-setup.exe` | Installer with Start menu shortcut. |
+| Windows 10/11 | `ReVibe-1.0.2-portable.exe` | One file, nothing installed. |
 
 All files are on the [releases page](https://github.com/mallardask-ops/ReVibe/releases/latest), with `SHA256SUMS.txt`.
 

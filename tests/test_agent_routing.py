@@ -110,7 +110,8 @@ def test_desktop_path_without_local_bin(tmp_path,monkeypatch):
     cli=tmp_path/'.local/bin/vibe'
     cli.parent.mkdir(parents=True)
     cli.write_text('#!/test/native/python\n')
-    monkeypatch.setattr(providers.shutil,'which',lambda name:None)
+    import vibe_bridge
+    monkeypatch.setattr(vibe_bridge.shutil,'which',lambda name:None)
     monkeypatch.setattr(providers.Path,'home',lambda:tmp_path)
     cfg=tmp_path/'config.toml'
     providers.sync_subagents(cfg)

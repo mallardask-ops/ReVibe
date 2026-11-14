@@ -58,6 +58,7 @@ function keySourceLabel(source: ApiKeyStatus["source"]): string {
     case "env": return "environment";
     case "keyring": return "system keyring";
     case "file": return "saved file";
+    case "vibe": return "Vibe CLI (~/.vibe/.env)";
     default: return "";
   }
 }

@@ -41,6 +41,10 @@ def main() -> None:
         *data(SIDECAR / "agent_routing.py", "."),
         "--collect-submodules", "uvicorn",
         "--collect-submodules", "keyring",
+        # keyring finds its backends through entry points, so it needs its
+        # metadata; Windows Credential Manager goes through win32ctypes.
+        "--copy-metadata", "keyring",
+        *(["--collect-submodules", "win32ctypes"] if os.name == "nt" else []),
         "--collect-submodules", "sidecar",
     ])
     shutil.move(str(OUT / "pyinstaller-dist" / "revibe-sidecar"), str(OUT / "sidecar"))

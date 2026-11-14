@@ -135,3 +135,27 @@ def test_status_never_leaks_key(isolated):
     import json
     blob = json.dumps(api_key_status())
     assert VALID_KEY not in blob
+
+
+def test_vibe_cli_env_file_is_a_fallback(isolated, tmp_path, monkeypatch):
+    # `vibe --setup` writes $VIBE_HOME/.env when no keyring backend works (common on Windows)
+    home = tmp_path / "vibe-home"
+    home.mkdir()
+    (home / ".env").write_text("MISTRAL_API_KEY='" + "v" * 32 + "'\n", encoding="utf-8")
+    monkeypatch.setenv("VIBE_HOME", str(home))
+    assert resolve_api_key() == "v" * 32
+    status = api_key_status()
+    assert status["present"] and status["source"] == "vibe"
+    remove_api_key()
+    assert resolve_api_key() is None
+
+
+def test_find_vibe_executable_prefers_tool_dir(tmp_path, monkeypatch):
+    import vibe_bridge
+    folder = tmp_path / "bin"
+    folder.mkdir()
+    exe = folder / ("vibe-app-server" + (".exe" if vibe_bridge.os.name == "nt" else ""))
+    exe.write_text("", encoding="utf-8")
+    monkeypatch.setattr(vibe_bridge, "_tool_dirs", lambda: [folder])
+    monkeypatch.delenv("VIBEDECK_APP_SERVER", raising=False)
+    assert vibe_bridge.find_app_server() == str(exe)

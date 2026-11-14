@@ -141,7 +141,7 @@ class UsageReader:
             return {"status": "disconnected", "source": "cli", "label": "Vibe CLI account", "plan": None}
         home = Path(os.environ.get("VIBE_HOME", Path.home() / ".vibe"))
         try:
-            entries = json.loads((home / "whoami_cache.json").read_text())
+            entries = json.loads((home / "whoami_cache.json").read_text(encoding="utf-8"))
             entry = entries.get(hashlib.sha256(key.encode()).hexdigest()[:32], {})
             payload = entry.get("payload")
             if payload and time.time() - entry.get("stored_at_timestamp", 0) < 21600:
@@ -151,7 +151,7 @@ class UsageReader:
             pass
         base = "https://console.mistral.ai"
         try:
-            config = tomllib.loads((home / "config.toml").read_text())
+            config = tomllib.loads((home / "config.toml").read_text(encoding="utf-8"))
             base = config.get("console_base_url", base)
         except (OSError, ValueError):
             pass

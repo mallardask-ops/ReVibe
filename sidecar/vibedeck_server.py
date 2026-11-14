@@ -94,6 +94,7 @@ from vibe_bridge import (
     SessionManager,
     VibeAppServer,
     find_app_server,
+    find_vibe_executable,
     valid_reasoning,
 )
 from vibe_sessions import LISTER_KEY, VibeSessionSync, cleanup_store_dir
@@ -629,12 +630,12 @@ async def health() -> dict:
         "port": PORT,
         "app_server": app_server,
         "app_server_path": srv,
-        "vibe_cli": shutil.which("vibe") is not None,
+        "vibe_cli": find_vibe_executable("vibe") is not None,
         "api_key": kstat["present"],
         "api_key_source": kstat["source"],
         "default_model": DEFAULT_MODEL,
         "default_agent": DEFAULT_AGENT,
-        "version": "1.0.1",
+        "version": "1.0.2",
         "vibe": vibe_install.info(srv),
         "user": getpass.getuser(),
     }
@@ -1748,7 +1749,7 @@ async def get_mcp(sid: Optional[str] = Query(None)) -> dict:
     cfg = Path(os.environ.get("VIBE_HOME", Path.home() / ".vibe")) / "config.toml"
     if cfg.exists():
         try:
-            raw = tomllib.loads(cfg.read_text())
+            raw = tomllib.loads(cfg.read_text(encoding="utf-8"))
             entries = raw.get("mcp_servers", raw.get("mcpServers", []))
             if isinstance(entries, dict):
                 entries = [{"name": name, **item} for name, item in entries.items() if isinstance(item, dict)]

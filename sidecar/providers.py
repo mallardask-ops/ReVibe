@@ -29,7 +29,6 @@ from __future__ import annotations
 import math
 import os
 import re
-import shutil
 import sys
 import tempfile
 from pathlib import Path
@@ -82,19 +81,19 @@ def sync_subagents(path: Optional[Path] = None, settings: AgentSettings | None =
     tools.mkdir(parents=True, exist_ok=True)
     source = Path(__file__).parent / "provider_tools/provider_task.py"
     target = tools / "provider_task.py"
-    text = source.read_text()
+    text = source.read_text(encoding="utf-8")
     existing = _read_text(target)
     marker = '# Managed by VibeDeck: provider routing tool\n'
     if existing and not existing.startswith(marker):
         raise ValueError("An independent provider_task.py already exists; rename it before enabling provider workers")
     helper = tools / "agent_routing.py"
-    if helper.exists() and not helper.read_text().startswith(marker):
+    if helper.exists() and not helper.read_text(encoding="utf-8").startswith(marker):
         raise ValueError("An independent agent_routing.py exists; rename it before enabling provider workers")
-    helper_text = marker + (Path(__file__).parent / "agent_routing.py").read_text()
+    helper_text = marker + (Path(__file__).parent / "agent_routing.py").read_text(encoding="utf-8")
     if _read_text(helper) != helper_text:
         fd, temporary = tempfile.mkstemp(prefix=".agent-routing-", dir=tools)
         try:
-            with os.fdopen(fd, "w") as stream:
+            with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as stream:
                 stream.write(helper_text)
             os.replace(temporary, helper)
         finally:
@@ -103,7 +102,7 @@ def sync_subagents(path: Optional[Path] = None, settings: AgentSettings | None =
         # Atomic and same-directory, like config edits; there are no secrets here.
         fd, temporary = tempfile.mkstemp(prefix=".provider-task-", dir=tools)
         try:
-            with os.fdopen(fd, "w") as stream:
+            with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as stream:
                 stream.write(marker + text)
             os.chmod(temporary, 0o600)
             if _read_text(target) != existing:
@@ -116,14 +115,7 @@ def sync_subagents(path: Optional[Path] = None, settings: AgentSettings | None =
     managed = next((s for s in servers if s.get("name") == "vibedeck_providers"), None)
     if managed and managed.get("args") != [str(target)]:
         raise ValueError("An independent vibedeck_providers MCP server exists; rename it first")
-    executable = shutil.which("vibe")
-    if not executable and (Path.home() / ".local/bin/vibe").is_file():
-        executable = str(Path.home() / ".local/bin/vibe")
-    python = sys.executable
-    if executable:
-        first = Path(executable).read_bytes().split(b"\n", 1)[0].decode()
-        if first.startswith("#!/") and "python" in first:
-            python = first[2:]
+    python = vibe_python()
     server = {"name": "vibedeck_providers", "transport": "stdio", "command": python,
               "args": [str(target)], "env": {"VIBE_HOME": str(path.parent)}, "tool_timeout_sec": 400}
     if managed is None:
@@ -139,7 +131,7 @@ def sync_subagents(path: Optional[Path] = None, settings: AgentSettings | None =
     if not plan.exists():
         fd, temporary = tempfile.mkstemp(prefix=".plan-", dir=plan.parent)
         try:
-            with os.fdopen(fd, "w") as stream:
+            with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as stream:
                 stream.write(PLAN_PROFILE)
                 stream.flush()
                 os.fsync(stream.fileno())
@@ -158,6 +150,32 @@ def sync_subagents(path: Optional[Path] = None, settings: AgentSettings | None =
             target.unlink()
 
 
+def vibe_python() -> str:
+    """The Python interpreter of the Vibe CLI's environment (runs the provider tool).
+
+    A packaged ReVibe has no usable ``sys.executable`` of its own: it is the
+    frozen sidecar, which would start a second server instead of the tool.
+    """
+    from vibe_bridge import _tool_dirs, find_vibe_executable
+    if os.name == "nt":
+        # uv/pipx venvs keep python.exe next to vibe.exe in Scripts\
+        for folder in _tool_dirs():
+            if folder.name == "Scripts" and (folder / "vibe.exe").is_file() and (folder / "python.exe").is_file():
+                return str(folder / "python.exe")
+    executable = find_vibe_executable("vibe")
+    if executable:
+        sibling = Path(os.path.realpath(executable)).parent / ("python.exe" if os.name == "nt" else "python")
+        if sibling.is_file():
+            return str(sibling)
+        try:
+            first = Path(executable).read_bytes().split(b"\n", 1)[0].decode("utf-8", "replace").strip()
+        except OSError:
+            first = ""
+        if first.startswith("#!/") and "python" in first:
+            return first[2:]
+    return sys.executable
+
+
 def vibe_config_path() -> Path:
     """The vibe CLI's user config — honors VIBE_HOME exactly like the CLI."""
     home = os.environ.get("VIBE_HOME") or str(Path.home() / ".vibe")
@@ -169,7 +187,7 @@ def vibe_config_path() -> Path:
 
 
 def _read_text(path: Path) -> str:
-    return path.read_text() if path.exists() else ""
+    return path.read_text(encoding="utf-8") if path.exists() else ""
 
 
 def _document(path: Path):
@@ -191,7 +209,7 @@ def _write_document(path: Path, original: str, document) -> None:
     mode = path.stat().st_mode & 0o777 if path.exists() else 0o600
     fd, temporary = tempfile.mkstemp(prefix=".vibedeck-", dir=path.parent)
     try:
-        with os.fdopen(fd, "w") as stream:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as stream:
             stream.write(text)
             stream.flush()
             os.fsync(stream.fileno())
